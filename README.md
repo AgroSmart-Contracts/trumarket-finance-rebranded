@@ -189,8 +189,7 @@ src/
 │   ├── static.tsx         # Static data (milestones, etc.)
 │   └── sampleData.ts      # Sample data for seeding
 ├── models/                # Mongoose models
-│   ├── ShipmentDetails.ts # Shipment model
-│   └── ShipmentActivity.ts # Activity model
+│   ├── ShipmentDetails.ts # Activity model
 └── types/                 # TypeScript types
     └── shipment.ts        # Shipment-related types
 ```

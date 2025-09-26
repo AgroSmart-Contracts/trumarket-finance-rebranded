@@ -2,12 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { ShippingDetails } from '@/types/shipment';
+import { DealDetails } from '@/types';
 import { milestones } from '@/lib/static';
 import RecentActivityList from './RecentActivity';
 import FinanceSection from './FinanceSection';
 import { useICPShipment, useICPActivities } from '@/hooks/useICPShipments';
-import { ShipmentDetails as ICPShipmentDetails } from '@/types/icp';
 
 const formatDate = (dateString: string) => {
     if (!dateString) {
@@ -67,7 +66,7 @@ const Card: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     </div>
 );
 
-const ShipmentDetailsPage: React.FC<{ shipment: ShippingDetails }> = ({
+const ShipmentDetailsPage: React.FC<{ shipment: DealDetails }> = ({
     shipment,
 }) => {
     const [activeStep, setActiveStep] = useState(shipment.currentMilestone);
@@ -135,7 +134,7 @@ const ShipmentDetailsPage: React.FC<{ shipment: ShippingDetails }> = ({
                         )}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        {shipment.docs.map((doc) => (
+                        {shipment.docs.map((doc: any) => (
                             <Card key={doc._id}>
                                 {doc.url.endsWith('.pdf') ? (
                                     <div className="p-4">
@@ -175,7 +174,7 @@ const ShipmentDetailsPage: React.FC<{ shipment: ShippingDetails }> = ({
                             : milestones[activeStep].label}
                     </h2>
                     <div className="mb-8 grid grid-cols-2 gap-4">
-                        {shipment.milestones[activeStep]?.docs.map((doc) => (
+                        {shipment.milestones[activeStep]?.docs.map((doc: any) => (
                             <Card key={doc._id}>
                                 {doc.url.endsWith('.pdf') ? (
                                     <div className="p-4">
@@ -218,52 +217,20 @@ const ShipmentDetailsPage: React.FC<{ shipment: ShippingDetails }> = ({
     );
 };
 
-// Helper function to convert ShipmentDetails to our format
-const convertICPToShippingDetails = (icpShipment: ICPShipmentDetails): ShippingDetails => {
-    return {
-        id: icpShipment.id,
-        name: icpShipment.name,
-        status: icpShipment.status,
-        origin: icpShipment.origin,
-        destination: icpShipment.destination,
-        presentation: icpShipment.presentation,
-        variety: icpShipment.variety,
-        docs: icpShipment.docs,
-        portOfDestination: icpShipment.portOfDestination,
-        portOfOrigin: icpShipment.portOfOrigin,
-        shippingStartDate: icpShipment.shippingStartDate,
-        expectedShippingEndDate: icpShipment.expectedShippingEndDate,
-        currentMilestone: icpShipment.currentMilestone,
-        milestones: icpShipment.milestones,
-        quality: icpShipment.quality,
-        offerUnitPrice: icpShipment.offerUnitPrice,
-        quantity: icpShipment.quantity,
-        transport: icpShipment.transport,
-        description: icpShipment.description,
-        investmentAmount: icpShipment.investmentAmount,
-        nftID: icpShipment.nftID,
-        mintTxHash: icpShipment.mintTxHash,
-        vaultAddress: Array.isArray(icpShipment.vaultAddress) && icpShipment.vaultAddress.length > 0
-            ? icpShipment.vaultAddress[0] ?? ''
-            : '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
-};
 
 export default function ShipmentDetails() {
-    const [shipmentDetails, setShipmentDetails] = useState<ShippingDetails | null>(null);
+    const [shipmentDetails, setShipmentDetails] = useState<DealDetails | null>(null);
     const params = useParams();
     const id = params?.id as string;
 
-    const { shipment: icpShipment, loading, error } = useICPShipment(id);
+    const { shipment: deal, loading, error } = useICPShipment(id);
 
     useEffect(() => {
-        if (icpShipment) {
-            const convertedShipment = convertICPToShippingDetails(icpShipment);
-            setShipmentDetails(convertedShipment);
+        if (deal) {
+            // Use deal directly without conversion
+            setShipmentDetails(deal);
         }
-    }, [icpShipment]);
+    }, [deal]);
 
     if (loading) {
         return (

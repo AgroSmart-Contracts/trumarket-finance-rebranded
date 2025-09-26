@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShippingDetails } from '@/types/shipment';
+import { DealDetails } from '@/types';
 import { milestones } from '@/lib/static';
 import { useICPShipments } from '@/hooks/useICPShipments';
-import { ShipmentDetails as ICPShipmentDetails } from '@/types/icp';
 
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
 };
 
 const ActiveShipmentCard: React.FC<{
-    shipment: ShippingDetails;
+    shipment: DealDetails;
     onClick: (id: string) => void;
 }> = ({ shipment, onClick }) => (
     <div
@@ -70,7 +69,7 @@ const CustomStepper: React.FC<{ currentStep: number }> = ({ currentStep }) => {
 };
 
 const InProgressShipmentRow: React.FC<{
-    shipment: ShippingDetails;
+    shipment: DealDetails;
     onClick: (id: string) => void;
 }> = ({ shipment, onClick }) => (
     <div
@@ -106,7 +105,7 @@ const InProgressShipmentRow: React.FC<{
 );
 
 const CompletedShipmentRow: React.FC<{
-    shipment: ShippingDetails;
+    shipment: DealDetails;
     onClick: (id: string) => void;
 }> = ({ shipment, onClick }) => (
     <div
@@ -138,9 +137,9 @@ const CompletedShipmentRow: React.FC<{
 );
 
 const ShipmentDashboard: React.FC<{
-    activeShipments: ShippingDetails[];
-    inProgressShipments: ShippingDetails[];
-    completedShipments: ShippingDetails[];
+    activeShipments: DealDetails[];
+    inProgressShipments: DealDetails[];
+    completedShipments: DealDetails[];
     onClickShipment: (id: string) => void;
 }> = ({
     activeShipments,
@@ -149,7 +148,7 @@ const ShipmentDashboard: React.FC<{
     onClickShipment,
 }) => {
         // Distribute active shipments across three columns
-        const activeShipmentColumns: ShippingDetails[][] = [[], [], []];
+        const activeShipmentColumns: DealDetails[][] = [[], [], []];
         activeShipments.forEach((shipment, index) => {
             activeShipmentColumns[index % 3].push(shipment);
         });
@@ -210,58 +209,27 @@ const ShipmentDashboard: React.FC<{
         );
     };
 
-// Helper function to convert ShipmentDetails to our format
-const convertICPToShippingDetails = (icpShipment: ICPShipmentDetails): ShippingDetails => {
-    return {
-        id: icpShipment.id,
-        name: icpShipment.name,
-        status: icpShipment.status,
-        origin: icpShipment.origin,
-        destination: icpShipment.destination,
-        presentation: icpShipment.presentation,
-        variety: icpShipment.variety,
-        docs: icpShipment.docs,
-        portOfDestination: icpShipment.portOfDestination,
-        portOfOrigin: icpShipment.portOfOrigin,
-        shippingStartDate: icpShipment.shippingStartDate,
-        expectedShippingEndDate: icpShipment.expectedShippingEndDate,
-        currentMilestone: icpShipment.currentMilestone,
-        milestones: icpShipment.milestones,
-        quality: icpShipment.quality,
-        offerUnitPrice: icpShipment.offerUnitPrice,
-        quantity: icpShipment.quantity,
-        transport: icpShipment.transport,
-        description: icpShipment.description,
-        investmentAmount: icpShipment.investmentAmount,
-        nftID: icpShipment.nftID,
-        mintTxHash: icpShipment.mintTxHash,
-        vaultAddress: Array.isArray(icpShipment.vaultAddress) && icpShipment.vaultAddress.length > 0
-            ? icpShipment.vaultAddress[0] ?? ''
-            : '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
-};
 
 export default function ShipmentsList() {
-    const [activeShipments, setActiveShipments] = useState<ShippingDetails[]>([]);
-    const [inProgressShipments, setInProgressShipments] = useState<ShippingDetails[]>([]);
-    const [completedShipments, setCompletedShipments] = useState<ShippingDetails[]>([]);
+    const [activeShipments, setActiveShipments] = useState<DealDetails[]>([]);
+    const [inProgressShipments, setInProgressShipments] = useState<DealDetails[]>([]);
+    const [completedShipments, setCompletedShipments] = useState<DealDetails[]>([]);
     const [loading, setLoading] = useState(true);
 
     const router = useRouter();
 
     // Fetch data from MongoDB
-    const { shipments: icpShipments, loading: icpLoading } = useICPShipments();
+    const { shipments: deals, loading: icpLoading } = useICPShipments();
 
     useEffect(() => {
         if (icpLoading) return;
 
-        const shipments = icpShipments.map(convertICPToShippingDetails);
+        // Use deals directly without conversion
+        const shipments = deals;
 
         setActiveShipments(
             shipments.filter(
-                (shipment: ShippingDetails) =>
+                (shipment: DealDetails) =>
                     shipment.status === 'proposal' ||
                     (shipment.status === 'confirmed' && shipment.currentMilestone === 0)
             )
@@ -269,17 +237,17 @@ export default function ShipmentsList() {
 
         setInProgressShipments(
             shipments.filter(
-                (shipment: ShippingDetails) =>
+                (shipment: DealDetails) =>
                     shipment.status === 'confirmed' && shipment.currentMilestone > 0
             )
         );
 
         setCompletedShipments(
-            shipments.filter((shipment: ShippingDetails) => shipment.status === 'finished')
+            shipments.filter((shipment: DealDetails) => shipment.status === 'finished')
         );
 
         setLoading(false);
-    }, [icpShipments, icpLoading]);
+    }, [deals, icpLoading]);
 
     const redirectToShipmentDetails = (shipmentId: string) => {
         router.push(`/shipments/${shipmentId}`);

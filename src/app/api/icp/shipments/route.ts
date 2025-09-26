@@ -3,8 +3,8 @@ import { deployedDataService } from '@/services/deployedDataService';
 
 export async function GET(request: NextRequest) {
     try {
-        const shipments = await deployedDataService.getShipmentsList();
-        return NextResponse.json(shipments);
+        const deals = await deployedDataService.getShipmentsList();
+        return NextResponse.json(deals);
     } catch (error) {
         console.error('Error fetching shipments:', error);
         return NextResponse.json({ error: 'Failed to fetch shipments' }, { status: 500 });

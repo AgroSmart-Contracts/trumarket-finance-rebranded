@@ -1,16 +1,6 @@
 import { config } from '@/config';
 import { MongoClient, ServerApiVersion, Db, Collection } from 'mongodb';
-
-export interface DealLog {
-    id: string;
-    dealId: number;
-    event: string;
-    args: any;
-    blockNumber: number;
-    blockTimestamp: Date;
-    txHash: string;
-    message: string;
-}
+import { DealLog } from '@/types';
 
 export class DealLogService {
     private client: MongoClient;

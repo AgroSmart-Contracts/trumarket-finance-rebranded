@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShipmentDetails, Activity } from '@/types/icp';
+import { DealDetails, Activity } from '@/types';
 
 export function useICPShipments() {
-    const [shipments, setShipments] = useState<ShipmentDetails[]>([]);
+    const [shipments, setShipments] = useState<DealDetails[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -62,7 +62,7 @@ export function useICPShipments() {
 }
 
 export function useICPShipment(id: string) {
-    const [shipment, setShipment] = useState<ShipmentDetails | null>(null);
+    const [shipment, setShipment] = useState<DealDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 

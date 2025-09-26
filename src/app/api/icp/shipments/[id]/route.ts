@@ -7,9 +7,9 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
-        const shipment = await deployedDataService.getShipmentDetails(id);
+        const deal = await deployedDataService.getDealDetails(id);
 
-        return NextResponse.json(shipment);
+        return NextResponse.json(deal);
     } catch (error) {
         console.error('Error fetching shipment details:', error);
         return NextResponse.json({ error: 'Failed to fetch shipment details' }, { status: 500 });

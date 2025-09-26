@@ -1,8 +1,7 @@
 'use client';
 
-import { ShipmentActivity } from '@/types/shipment';
+import { Activity } from '@/types';
 import { useICPActivities } from '@/hooks/useICPShipments';
-import { Activity } from '@/types/icp';
 
 const RecentActivityList = ({ id }: { id: number }) => {
     const { activities, loading } = useICPActivities(id);
