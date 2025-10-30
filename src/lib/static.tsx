@@ -1,11 +1,11 @@
 import {
-    Farm,
-    Factory,
-    Package,
+    Sprout as Farm,
+    Building2 as Factory,
+    Package as PackageIcon,
     Truck,
     Anchor,
-    Boat,
-} from '@phosphor-icons/react';
+    Ship as Boat,
+} from 'lucide-react';
 
 export const productQualityOptions = [
     { value: 'CAT1', label: 'CAT1' },
@@ -20,6 +20,7 @@ export const milestones = [
         label: 'Production and Fields',
         icon: Farm,
         milestone: 1,
+        emoji: '🌱',
     },
     {
         id: '',
@@ -27,13 +28,15 @@ export const milestones = [
         label: 'Packaging and Process',
         icon: Factory,
         milestone: 2,
+        emoji: '📦',
     },
     {
         id: '',
         value: 'finished_product_and_storage',
         label: 'Finished Product and Storage',
-        icon: Package,
+        icon: PackageIcon,
         milestone: 3,
+        emoji: '🏪',
     },
     {
         id: '',
@@ -41,6 +44,7 @@ export const milestones = [
         label: 'Transportation to Port of Origin',
         icon: Truck,
         milestone: 4,
+        emoji: '🚛',
     },
     {
         id: '',
@@ -48,6 +52,7 @@ export const milestones = [
         label: 'Port of Origin',
         icon: Anchor,
         milestone: 5,
+        emoji: '⚓',
     },
     {
         id: '',
@@ -55,6 +60,7 @@ export const milestones = [
         label: 'Transit',
         icon: Boat,
         milestone: 6,
+        emoji: '🚢',
     },
     {
         id: '',
@@ -62,5 +68,6 @@ export const milestones = [
         label: 'Port of Destination',
         icon: Anchor,
         milestone: 7,
+        emoji: '⚓',
     },
 ];

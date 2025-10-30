@@ -1,6 +1,5 @@
 'use client';
 
-import { Card } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 
 interface Props {
@@ -91,7 +90,7 @@ const FinanceSection: React.FC<Props> = ({
     };
 
     return (
-        <Card className="bg-white w-full p-6">
+        <div className="bg-white w-full p-6 border border-border rounded-lg shadow-sm">
             {/* Total Pool Assets */}
             {renderLiquidityPoolDeposit()}
 
@@ -100,7 +99,7 @@ const FinanceSection: React.FC<Props> = ({
                 <a
                     href={`https://etherscan.io/token/${vaultAddress}`}
                     target="_blank"
-                    className="rounded font-mono flex items-center gap-2 text-gray-400"
+                    className="rounded font-mono flex items-center gap-2 text-gray-400 hover:text-primary transition-colors"
                 >
                     Vault {truncateAddress(vaultAddress)}
                 </a>
@@ -124,7 +123,7 @@ const FinanceSection: React.FC<Props> = ({
                         <div className="flex justify-center">
                             <button
                                 onClick={() => setShowDepositForm(!showDepositForm)}
-                                className="bg-[#8aab3f] text-white rounded px-6 py-2 w-full"
+                                className="btn-invest-primary w-full"
                             >
                                 Deposit
                             </button>
@@ -133,7 +132,7 @@ const FinanceSection: React.FC<Props> = ({
 
                     {showDepositForm && (
                         <div className="w-50">
-                            <div className="p-4 border rounded-lg">
+                            <div className="p-4 border border-border rounded-lg">
                                 <p className="text-sm text-gray-600 mb-2">
                                     Pool Capacity: {CurrencyFormatter(requestFundAmount - amountFunded)}
                                 </p>
@@ -151,7 +150,7 @@ const FinanceSection: React.FC<Props> = ({
                         <button
                             onClick={reclaim}
                             disabled={redeeming}
-                            className="bg-[#8aab3f] text-white rounded px-6 py-2 mb-4"
+                            className="btn-invest-primary mb-4"
                         >
                             {redeeming ? 'Reclaiming...' : 'Reclaim'}
                         </button>
@@ -161,7 +160,7 @@ const FinanceSection: React.FC<Props> = ({
                     </div>
                 </div>
             )}
-        </Card>
+        </div>
     );
 };
 

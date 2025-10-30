@@ -1,20 +1,92 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary: #8aab3f;
+  /* TruMarket LP Brand Colors */
+  --brand-green: #009b55;
+  --brand-green-dark: #047a47;
+  --accent-amber: #ffc34d;
+  --accent-coral: #f0625e;
+  --text-dark: #333333;
+  --surface-light: #f4f4f4;
+  --white: #ffffff;
+  --investment-blue: #1e40af;
+  --investment-blue-dark: #1e3a8a;
+  --gold: #f59e0b;
+  --success-green: #10b981;
+
+  /* Tailwind CSS Variables */
+  --radius: 0.625rem;
+  --background: var(--white);
+  --foreground: var(--text-dark);
+  --card: var(--white);
+  --card-foreground: var(--text-dark);
+  --popover: var(--white);
+  --popover-foreground: var(--text-dark);
+  --primary: var(--brand-green);
+  --primary-foreground: var(--white);
+  --secondary: var(--surface-light);
+  --secondary-foreground: var(--text-dark);
+  --muted: var(--surface-light);
+  --muted-foreground: #666666;
+  --accent: var(--accent-amber);
+  --accent-foreground: var(--text-dark);
+  --destructive: var(--accent-coral);
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: var(--brand-green);
+  --chart-1: var(--brand-green);
+  --chart-2: var(--investment-blue);
+  --chart-3: var(--gold);
+  --chart-4: var(--accent-amber);
+  --chart-5: var(--success-green);
+  --sidebar: var(--surface-light);
+  --sidebar-foreground: var(--text-dark);
+  --sidebar-primary: var(--brand-green);
+  --sidebar-primary-foreground: var(--white);
+  --sidebar-accent: var(--surface-light);
+  --sidebar-accent-foreground: var(--text-dark);
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: var(--brand-green);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --font-sans: var(--font-poppins);
+.dark {
+  --background: var(--text-dark);
+  --foreground: var(--white);
+  --card: #2a2a2a;
+  --card-foreground: var(--white);
+  --popover: #2a2a2a;
+  --popover-foreground: var(--white);
+  --primary: var(--brand-green);
+  --primary-foreground: var(--white);
+  --secondary: #2a2a2a;
+  --secondary-foreground: var(--white);
+  --muted: #2a2a2a;
+  --muted-foreground: #a1a1aa;
+  --accent: var(--accent-amber);
+  --accent-foreground: var(--text-dark);
+  --destructive: var(--accent-coral);
+  --border: #404040;
+  --input: #404040;
+  --ring: var(--brand-green);
+  --chart-1: var(--brand-green);
+  --chart-2: var(--investment-blue);
+  --chart-3: var(--gold);
+  --chart-4: var(--accent-amber);
+  --chart-5: var(--success-green);
+  --sidebar: #2a2a2a;
+  --sidebar-foreground: var(--white);
+  --sidebar-primary: var(--brand-green);
+  --sidebar-primary-foreground: var(--white);
+  --sidebar-accent: #2a2a2a;
+  --sidebar-accent-foreground: var(--white);
+  --sidebar-border: #404040;
+  --sidebar-ring: var(--brand-green);
 }
 
-body,
-html {
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: "Inter", sans-serif;
 }
 
 @layer utilities {
@@ -23,49 +95,546 @@ html {
   }
 }
 
-body {
-  font-family: var(--font-poppins), sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #333333;
-  background-color: #f8f9fa;
+/* Custom styles for TruMarket */
+.investment-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--brand-green) 0%,
+    var(--investment-blue) 100%
+  );
 }
 
-.color-primary {
-  color: #8aab3f;
+.yield-gradient {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--accent-amber) 100%);
 }
 
-.bg-primary {
-  background-color: #8aab3f;
+.investment-text-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--brand-green) 0%,
+    var(--investment-blue) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-button {
-  border-radius: 0.25rem;
+.mint-text-gradient {
+  background: linear-gradient(
+    135deg,
+    rgba(118, 251, 169, 0.891) 0%,
+    rgb(25, 115, 68) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.yield-display {
+  font-family: "Inter", sans-serif;
+  font-weight: 800;
+  font-size: 3.5rem;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.yield-text-gradient {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--accent-amber) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.yield-card {
+  border-radius: 12px;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.yield-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--yield-gradient);
+}
+
+.yield-highlight-card {
+  background: linear-gradient(135deg, #29f73769, #b6d1ff);
+}
+
+.yield-comparison-card {
+  background: linear-gradient(
+    135deg,
+    rgba(38, 25, 2, 0.05) 0%,
+    rgba(41, 31, 12, 0.05) 100%
+  );
+  border: 2px solid var(--gold);
+}
+
+.yield-shadow {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.yield-pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.investment-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.investment-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.investment-heading {
+  font-family: "Inter", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #1f2937;
+}
+
+.metric-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+  border-color: var(--brand-green);
+  box-shadow: 0 4px 12px rgba(0, 155, 85, 0.15);
+}
+
+.metric-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--brand-green);
+  line-height: 1;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-invest-primary {
+  background: var(--brand-green);
+  color: var(--white);
+  border: 2px solid var(--brand-green);
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px 0 rgba(0, 155, 85, 0.25);
+}
+
+.btn-invest-primary:hover {
+  box-shadow: 0 8px 25px 0 rgba(0, 155, 85, 0.35);
+}
+
+.btn-secondary-outline {
+  background: transparent;
+  color: #374151;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.btn-secondary-outline:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.calculator-input {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.8rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.calculator-input::placeholder {
+  color: #6b7280;
+}
+
+.calculator-input:focus {
+  outline: none;
+  border-color: var(--brand-green);
+  box-shadow: 0 0 0 3px rgba(0, 155, 85, 0.1);
+}
+
+.investment-period-input {
+  padding: 1rem 2.3rem;
+}
+
+/* Tracking/Shipment Page Styles */
+.platform-sidebar-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 2rem;
+}
+
+.platform-sidebar {
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  padding: 1.5rem;
+}
+
+.sidebar-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 1.5rem;
+}
+
+.milestone-location {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--surface-light);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.flag {
+  font-size: 2rem;
+}
+
+.location-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.location-date {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.milestone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.milestone-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.milestone-item.completed {
+  background: #dcfce7;
+  border-color: var(--brand-green);
+}
+
+.milestone-item.completed:hover {
+  background: #bbf7d0;
+}
+
+.milestone-item.pending {
+  background: var(--white);
+  border-color: #e5e7eb;
+  opacity: 0.6;
+}
+
+.milestone-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--brand-green);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+  margin-right: 0.75rem;
+}
+
+.milestone-item.pending .milestone-icon {
+  background: #9ca3af;
+  color: #f9fafb;
+}
+
+.milestone-content {
+  flex: 1;
+}
+
+.milestone-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-dark);
+  margin-bottom: 0.25rem;
+}
+
+.milestone-location-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 0.125rem;
+}
+
+.milestone-date {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.milestone-badge {
+  background: var(--brand-green);
+  color: var(--white);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.milestone-badge.active {
+  background: var(--brand-green);
+}
+
+.milestone-badge.new {
+  background: #f59e0b;
+}
+
+.platform-main-content {
+  background: var(--white);
+  padding: 2rem;
+}
+
+.milestone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.milestone-header-left {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.milestone-icon-large {
+  font-size: 2.5rem;
+  background: #dcfce7;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.milestone-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+.milestone-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.milestone-header-right {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.milestone-approval-badge {
   padding: 0.5rem 1rem;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-dark);
 }
 
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.platform-btn {
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
 }
 
-button:hover {
-  filter: brightness(1.1);
+.platform-btn-primary {
+  background: var(--brand-green);
+  color: var(--white);
 }
 
-.multine-ellipsis {
-  -webkit-box-orient: vertical;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
+.platform-btn-primary:hover {
+  background: var(--brand-green-dark);
+}
+
+.platform-btn-danger {
+  background: #ef4444;
+  color: var(--white);
+}
+
+.platform-btn-danger:hover {
+  background: #dc2626;
+}
+
+.platform-btn-success {
+  background: #10b981;
+  color: var(--white);
+}
+
+.platform-btn-success:hover {
+  background: #059669;
+}
+
+.document-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.document-item {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.document-item:hover {
+  border-color: var(--brand-green);
+  box-shadow: 0 4px 12px rgba(0, 155, 85, 0.15);
+}
+
+.document-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--white);
+}
+
+.document-icon.pdf {
+  background: #dc2626;
+}
+
+.document-icon.doc {
+  background: #2563eb;
+}
+
+.document-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-dark);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: normal;
+  white-space: nowrap;
 }
 
-.clamp-4 {
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.document-action {
+  padding: 0.5rem 1rem;
+  background: var(--surface-light);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.document-action:hover {
+  background: var(--brand-green);
+  color: var(--white);
+}
+
+.document-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: #f59e0b;
+  color: var(--white);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.download-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.download-btn {
+  position: relative;
+}
+
+.download-count {
+  margin-left: 0.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+@media (max-width: 1024px) {
+  .platform-sidebar-layout {
+    grid-template-columns: 1fr;
+  }
 }

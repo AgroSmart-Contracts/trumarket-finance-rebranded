@@ -51,7 +51,7 @@ const RecentActivityList = ({ id }: { id: number }) => {
                                     </div>
                                     <div className="flex items-center space-x-4">
                                         <div className="text-right">
-                                            <div className={`font-medium`}>{record.message}</div>
+                                            <div className={`font-medium`}>{record.message.replace(/tokens/gi, "USDC")}</div>
                                             <div className="text-sm text-gray-500">
                                                 {formatDate(record.blockTimestamp)}
                                             </div>

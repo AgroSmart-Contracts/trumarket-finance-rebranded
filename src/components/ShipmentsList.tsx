@@ -13,11 +13,11 @@ const ActiveShipmentCard: React.FC<{
 }> = ({ shipment, onClick }) => (
     <div
         onClick={() => onClick(shipment.id)}
-        className="bg-white shadow rounded-lg p-6 mb-6 flex flex-col transition-all duration-300 ease-in-out hover:bg-gray-100 cursor-pointer hover:shadow-lg"
+        className="bg-white border border-border rounded-lg p-6 mb-6 flex flex-col transition-all duration-300 ease-in-out hover:bg-gray-50 cursor-pointer hover:shadow-lg hover:border-primary"
     >
-        <h3 className="text-lg font-semibold mb-2">{shipment.name}</h3>
+        <h3 className="text-lg font-semibold mb-2 text-gray-900">{shipment.name}</h3>
         <p className="text-gray-600 mb-4 flex-grow">{shipment.description}</p>
-        <div className="mt-2">
+        <div className="mt-2 space-y-1">
             <p className="text-sm">
                 <strong>Origin:</strong> {shipment.origin}
             </p>
@@ -25,7 +25,7 @@ const ActiveShipmentCard: React.FC<{
                 <strong>Start Date:</strong> {formatDate(shipment.shippingStartDate)}
             </p>
         </div>
-        <div className="mt-2">
+        <div className="mt-2 space-y-1">
             <p className="text-sm">
                 <strong>Destination:</strong> {shipment.destination}
             </p>
@@ -47,16 +47,17 @@ const CustomStepper: React.FC<{ currentStep: number }> = ({ currentStep }) => {
                 return (
                     <div key={step.label} className="flex flex-col items-center">
                         <div
-                            className={`rounded-full p-2 ${index <= currentStep
-                                ? 'bg-[#8aab3f] text-white'
-                                : 'bg-gray-200 text-gray-500'
+                            className={`rounded-full p-2 transition-all ${index <= currentStep
+                                    ? 'bg-primary text-white shadow-sm'
+                                    : 'bg-gray-200 text-gray-500'
                                 }`}
                             title={step.label}
                         >
                             <Icon size={16} />
                         </div>
                         {index < steps.length - 1 && (
-                            <div className="flex-1 border-t-2 border-gray-300 mx-2"></div>
+                            <div className={`flex-1 border-t-2 mx-2 transition-colors ${index < currentStep ? 'border-primary' : 'border-gray-300'
+                                }`}></div>
                         )}
                     </div>
                 );
@@ -71,17 +72,17 @@ const InProgressShipmentRow: React.FC<{
 }> = ({ shipment, onClick }) => (
     <div
         onClick={() => onClick(shipment.id)}
-        className="py-6 px-4 border-b border-gray-200 transition-all duration-300 ease-in-out hover:bg-gray-100 cursor-pointer hover:shadow-lg"
+        className="py-6 px-4 border-b border-border transition-all duration-300 ease-in-out hover:bg-gray-50 cursor-pointer"
     >
         <div className="grid grid-cols-12 gap-4 items-center">
             <div className="col-span-2">
-                <h4 className="font-semibold">{shipment.name}</h4>
+                <h4 className="font-semibold text-gray-900">{shipment.name}</h4>
             </div>
             <div className="col-span-2">
-                <p className="text-sm">
+                <p className="text-sm text-gray-700">
                     <strong>Origin:</strong> {shipment.origin}
                 </p>
-                <p className="text-sm">
+                <p className="text-sm text-gray-700">
                     <strong>Start:</strong> {formatDate(shipment.shippingStartDate)}
                 </p>
             </div>
@@ -89,10 +90,10 @@ const InProgressShipmentRow: React.FC<{
                 <CustomStepper currentStep={shipment.currentMilestone} />
             </div>
             <div className="col-span-2">
-                <p className="text-sm">
+                <p className="text-sm text-gray-700">
                     <strong>Destination:</strong> {shipment.destination}
                 </p>
-                <p className="text-sm">
+                <p className="text-sm text-gray-700">
                     <strong>Expected End:</strong>{' '}
                     {formatDate(shipment.expectedShippingEndDate)}
                 </p>
@@ -107,25 +108,25 @@ const CompletedShipmentRow: React.FC<{
 }> = ({ shipment, onClick }) => (
     <div
         onClick={() => onClick(shipment.id)}
-        className="py-6 px-4 border-b border-gray-200 transition-all duration-300 ease-in-out hover:bg-gray-100 cursor-pointer hover:shadow-lg"
+        className="py-6 px-4 border-b border-border transition-all duration-300 ease-in-out hover:bg-gray-50 cursor-pointer"
     >
         <div className="grid grid-cols-12 gap-4 items-center">
             <div className="col-span-4">
-                <h4 className="font-semibold">{shipment.name}</h4>
+                <h4 className="font-semibold text-gray-900">{shipment.name}</h4>
             </div>
             <div className="col-span-4">
-                <p className="text-sm">
+                <p className="text-sm text-gray-700">
                     <strong>Origin:</strong> {shipment.origin}
                 </p>
-                <p className="text-sm">
+                <p className="text-sm text-gray-700">
                     <strong>Start:</strong> {formatDate(shipment.shippingStartDate)}
                 </p>
             </div>
             <div className="col-span-4">
-                <p className="text-sm">
+                <p className="text-sm text-gray-700">
                     <strong>Destination:</strong> {shipment.destination}
                 </p>
-                <p className="text-sm">
+                <p className="text-sm text-gray-700">
                     <strong>End:</strong> {formatDate(shipment.expectedShippingEndDate)}
                 </p>
             </div>
@@ -152,9 +153,9 @@ const ShipmentDashboard: React.FC<{
 
         return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <h1 className="text-3xl font-bold mb-8">Deals</h1>
+                <h1 className="text-3xl font-bold mb-8 text-gray-900">Deals</h1>
 
-                <h2 className="text-2xl font-semibold mt-8 mb-4">Active</h2>
+                <h2 className="text-2xl font-semibold mt-8 mb-4 text-gray-900">Active</h2>
                 {activeShipments.length > 0 ? (
                     <div className="flex flex-col md:flex-row md:space-x-6">
                         {activeShipmentColumns.map((column, columnIndex) => (
@@ -170,12 +171,12 @@ const ShipmentDashboard: React.FC<{
                         ))}
                     </div>
                 ) : (
-                    <p>No active deals</p>
+                    <p className="text-gray-600">No active deals</p>
                 )}
 
-                <h2 className="text-2xl font-semibold mt-8 mb-4">In Progress</h2>
+                <h2 className="text-2xl font-semibold mt-8 mb-4 text-gray-900">In Progress</h2>
                 {inProgressShipments.length > 0 ? (
-                    <div className="bg-white shadow rounded-lg overflow-hidden">
+                    <div className="bg-white border border-border rounded-lg overflow-hidden shadow-sm">
                         {inProgressShipments.map((shipment) => (
                             <InProgressShipmentRow
                                 onClick={onClickShipment}
@@ -185,12 +186,12 @@ const ShipmentDashboard: React.FC<{
                         ))}
                     </div>
                 ) : (
-                    <p>No in-progress deals</p>
+                    <p className="text-gray-600">No in-progress deals</p>
                 )}
 
-                <h2 className="text-2xl font-semibold mt-8 mb-4">Completed</h2>
+                <h2 className="text-2xl font-semibold mt-8 mb-4 text-gray-900">Completed</h2>
                 {completedShipments.length > 0 ? (
-                    <div className="bg-white shadow rounded-lg overflow-hidden">
+                    <div className="bg-white border border-border rounded-lg overflow-hidden shadow-sm">
                         {completedShipments.map((shipment) => (
                             <CompletedShipmentRow
                                 onClick={onClickShipment}
@@ -200,7 +201,7 @@ const ShipmentDashboard: React.FC<{
                         ))}
                     </div>
                 ) : (
-                    <p>No completed deals</p>
+                    <p className="text-gray-600">No completed deals</p>
                 )}
             </div>
         );
