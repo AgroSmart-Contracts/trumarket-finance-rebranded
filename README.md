@@ -1,24 +1,80 @@
-# Trumarket Finance - Next.js Version
+# 🌾 TruMarket Finance — Investor Dashboard
 
-This is a Next.js version of the Trumarket Finance application, using MongoDB instead of ICP (Internet Computer Protocol) for data storage.
+**TruMarket Finance** is the investor-facing dashboard of [TruMarket](https://trumarket.tech), a **Web3 AgroTrade & Real-World Asset (RWA)** platform that brings agricultural exports on-chain.  
+Through this dashboard, verified investors can seamlessly participate in **tokenized trade deals** created by exporters and earn stable returns backed by real-world assets.
 
-## Features
+---
 
-- **Shipment Management**: View and manage trade finance deals
-- **Milestone Tracking**: Track shipment progress through various stages
-- **Activity Logging**: Monitor all activities related to shipments
-- **Finance Integration**: Mock finance section for investment tracking
-- **Responsive Design**: Modern UI with Tailwind CSS
+## 🚀 Overview
 
-## Tech Stack
+TruMarket Finance enables investors to:
 
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **Styling**: Tailwind CSS
-- **Database**: MongoDB with Mongoose
-- **Icons**: Phosphor Icons
-- **UI Components**: Material-UI
+- 💰 **Invest in Tokenized Export Deals** — Access pre-vetted, asset-backed agricultural trade opportunities.
+- ⛓️ **Track On-Chain Investments** — Transparent milestone updates and blockchain-verified settlements.
+- 📊 **View Portfolio Analytics** — Monitor active deals, earnings, and real-time payment flows.
+- 🔐 **Enjoy Secure Non-Custodial Access** — Wallet-based authentication (no centralized fund custody).
 
-## Setup Instructions
+---
+
+## 🧩 Key Features
+
+| Feature                              | Description                                                                                    |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| **Deal Tokenization**                | Each export financing deal is tokenized on-chain, allowing fractional participation.           |
+| **Milestone Tracking**               | Smart contracts release funds progressively based on verified shipment and payment milestones. |
+| **Activity Logging**                 | Real-time monitoring of all shipment activities and financial transactions.                    |
+| **Cross-Border Payments**            | Ongoing integration of instant on/off-ramp and multi-currency settlements.                     |
+| **Shipment Management**              | Comprehensive view of trade finance deals with detailed status tracking.                       |
+| **AI Risk Insights (Upcoming)**      | Machine learning models to evaluate exporter performance and shipment risk.                    |
+| **Multi-Chain Liquidity (Upcoming)** | Liquidity pools deployed across XRPL and Flow for yield diversification.                       |
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend:** Next.js 15 (React 19 + TypeScript)
+- **UI Framework:** Tailwind CSS + Material-UI + shadcn/ui
+- **Backend:** Node.js + MongoDB (Mongoose)
+- **Blockchain Integrations:**
+  - ICP (Internet Computer Protocol) for immutable trade data
+  - XRPL (cross-border payments, stablecoin rails)
+  - Flow (liquidity pools and staking incentives)
+- **Icons:** Phosphor Icons
+- **Wallet Support:** MetaMask, WalletConnect, and XUMM (for XRPL)
+- **Hosting:** AWS Amplify + CloudFront + S3 (file storage)
+
+---
+
+## 🌍 Current Focus
+
+We are currently working on integrating **cross-border payment features** to enable instant USD↔USDC settlements between exporters and investors, starting with corridors such as **Peru ↔ Europe** and **Egypt ↔ U.S.**
+
+This Next.js version uses **MongoDB for scalable data management** while maintaining ICP integration for blockchain-verified trade data.
+
+---
+
+## 📈 Roadmap
+
+| Quarter | Milestone                                          |
+| ------- | -------------------------------------------------- |
+| Q4 2025 | Cross-border payments integration (USD↔USDC)       |
+| Q1 2026 | Deployment of liquidity pools on XRPL              |
+| Q2 2026 | Expansion to Flow blockchain + rewards program     |
+| Q3 2026 | Launch of AI-powered exporter risk analytics       |
+| Q4 2026 | Multi-country rollout and institutional onboarding |
+
+---
+
+## 🧑‍💼 For Investors
+
+- Minimum deal size: varies per exporter
+- Settlement time: <10 seconds (on-chain)
+- Typical yield: 12–15% annualized (deal-dependent)
+- Deal transparency: verified trade documents and milestone-based fund release
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
@@ -28,16 +84,16 @@ This is a Next.js version of the Trumarket Finance application, using MongoDB in
 
 ### Installation
 
-1. Install dependencies:
+1. **Install dependencies:**
 
 ```bash
 npm install
 ```
 
-2. Set up environment variables:
+2. **Set up environment variables:**  
    Create a `.env.local` file in the root directory:
 
-```
+```bash
 DATABASE_URL=mongodb://localhost:27017/trumarket-api
 
 # AWS Configuration (optional, for file uploads)
@@ -51,10 +107,7 @@ ICP_CANISTER_ID=uibem-miaaa-aaaal-qr7qq-cai
 ICP_RPC_PROVIDER=https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.icp0.io
 ```
 
-This uses the same database URL pattern as the main trumarket project.
-
-3. Start MongoDB:
-   You can either:
+3. **Start MongoDB:**
 
    **Option A: Use the same MongoDB instance as trumarket project:**
 
@@ -69,37 +122,33 @@ This uses the same database URL pattern as the main trumarket project.
    mongod
    ```
 
-4. Seed the database (optional):
+4. **Seed the database with sample data:**
 
 ```bash
+# Seed deals
+curl -X POST http://localhost:3000/api/deals/seed
+
+# Seed legacy shipments (optional)
 curl -X POST http://localhost:3000/api/seed
 ```
 
-5. Seed the database with sample data:
-
-```bash
-curl -X POST http://localhost:3000/api/deals/seed
-```
-
-This will populate the database with sample deals matching the trumarket schema.
-
-6. Sync data from ICP canister (optional):
+5. **Sync data from ICP canister (optional):**
 
 ```bash
 curl -X POST http://localhost:3000/api/sync/icp
 ```
 
-This will sync data from the ICP canister to MongoDB.
-
-7. Start the development server:
+6. **Start the development server:**
 
 ```bash
 npm run dev
 ```
 
-8. Open [http://localhost:3000](http://localhost:3000) in your browser.
+7. **Open [http://localhost:3000](http://localhost:3000)** in your browser.
 
-## Testing the System
+---
+
+## 🧪 Testing the System
 
 ### Test ICP Connectivity
 
@@ -128,7 +177,9 @@ curl -X POST "http://localhost:3000/api/deal-logs/seed?dealId=123"
 curl http://localhost:3000/api/icp/shipments/123/activities
 ```
 
-## API Endpoints
+---
+
+## 📡 API Endpoints
 
 ### ICP Canister Data
 
@@ -170,7 +221,9 @@ curl http://localhost:3000/api/icp/shipments/123/activities
 - `POST /api/shipments/[id]/activities` - Create activity
 - `POST /api/seed` - Seed database with sample data
 
-## Project Structure
+---
+
+## 📁 Project Structure
 
 ```
 src/
@@ -194,18 +247,51 @@ src/
     └── shipment.ts        # Shipment-related types
 ```
 
-## Key Differences from ICP Version
+---
 
-1. **Database**: Uses MongoDB instead of ICP's stable storage
-2. **API**: RESTful API routes instead of ICP canister methods
-3. **Authentication**: Simplified (no ICP-specific auth)
-4. **Deployment**: Standard Next.js deployment instead of ICP deployment
-5. **Dependencies**: Standard npm packages instead of ICP-specific libraries
+## 🔄 Key Differences from ICP Version
 
-## Development
+| Aspect             | ICP Version             | Next.js Version                |
+| ------------------ | ----------------------- | ------------------------------ |
+| **Database**       | ICP stable storage      | MongoDB                        |
+| **API**            | ICP canister methods    | RESTful API routes             |
+| **Authentication** | ICP-specific auth       | Simplified (wallet-based)      |
+| **Deployment**     | ICP canister deployment | Standard Next.js (AWS Amplify) |
+| **Dependencies**   | ICP-specific libraries  | Standard npm packages          |
 
-The application includes sample data that can be loaded using the seed endpoint. The finance section is currently mocked for demonstration purposes.
+---
 
-## License
+## 🧠 Learn More
 
-This project is part of the Trumarket Finance platform.
+- Main site: [https://trumarket.tech](https://trumarket.tech)
+- Investor dashboard: [https://finance.trumarket.tech](https://finance.trumarket.tech)
+- Pitch deck & roadmap: _available on request_
+
+---
+
+## 🤝 Partnerships & Programs
+
+TruMarket is part of:
+
+- **XRPL Accelerator / Grant Program**
+- **Flow Blockchain Forte Hackathon 2025**
+- **AWS Activate Startup Program**
+- **Internet Computer Protocol (ICP) Ecosystem**
+
+---
+
+## 📨 Contact
+
+For investor or partnership inquiries:  
+📧 **admin@trumarket.tech**  
+🌍 [https://trumarket.tech](https://trumarket.tech)
+
+---
+
+## 💻 Development
+
+This project is part of the [TruMarket](https://trumarket.tech) ecosystem — the comprehensive Web3 AgroTrade platform revolutionizing agricultural export financing.
+
+---
+
+**Built with ❤️ by the TruMarket Team | Part of [https://trumarket.tech](https://trumarket.tech)**
