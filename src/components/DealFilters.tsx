@@ -20,6 +20,9 @@ export interface FilterOptions {
     statuses: string[];
     transports: string[];
     minInvestment: number | null;
+    risks: string[];
+    minAPY: number | null;
+    maxAPY: number | null;
 }
 
 interface DealFiltersProps {
@@ -28,41 +31,31 @@ interface DealFiltersProps {
 
 export default function DealFilters({ onFilterChange }: DealFiltersProps) {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [selectedOrigin, setSelectedOrigin] = useState<string>('all');
-    const [selectedDestination, setSelectedDestination] = useState<string>('all');
-    const [selectedStatus, setSelectedStatus] = useState<string>('all');
-    const [selectedTransport, setSelectedTransport] = useState<string>('all');
     const [selectedMinInvestment, setSelectedMinInvestment] = useState<string>('all');
+    const [selectedRisk, setSelectedRisk] = useState<string>('all');
+    const [selectedAPYRange, setSelectedAPYRange] = useState<string>('all');
 
     const updateFilters = () => {
+        // Parse APY range
+        let minAPY = null;
+        let maxAPY = null;
+        if (selectedAPYRange !== 'all') {
+            const [min, max] = selectedAPYRange.split('-').map(Number);
+            minAPY = min;
+            maxAPY = max || null;
+        }
+
         const filters: FilterOptions = {
-            origins: selectedOrigin === 'all' ? [] : [selectedOrigin],
-            destinations: selectedDestination === 'all' ? [] : [selectedDestination],
-            statuses: selectedStatus === 'all' ? [] : [selectedStatus],
-            transports: selectedTransport === 'all' ? [] : [selectedTransport],
+            origins: [],
+            destinations: [],
+            statuses: [],
+            transports: [],
             minInvestment: selectedMinInvestment === 'all' ? null : parseInt(selectedMinInvestment),
+            risks: selectedRisk === 'all' ? [] : [selectedRisk],
+            minAPY,
+            maxAPY,
         };
         onFilterChange(filters);
-    };
-
-    const handleOriginChange = (value: string) => {
-        setSelectedOrigin(value);
-        setTimeout(updateFilters, 0);
-    };
-
-    const handleDestinationChange = (value: string) => {
-        setSelectedDestination(value);
-        setTimeout(updateFilters, 0);
-    };
-
-    const handleStatusChange = (value: string) => {
-        setSelectedStatus(value);
-        setTimeout(updateFilters, 0);
-    };
-
-    const handleTransportChange = (value: string) => {
-        setSelectedTransport(value);
-        setTimeout(updateFilters, 0);
     };
 
     const handleMinInvestmentChange = (value: string) => {
@@ -70,35 +63,42 @@ export default function DealFilters({ onFilterChange }: DealFiltersProps) {
         setTimeout(updateFilters, 0);
     };
 
+    const handleRiskChange = (value: string) => {
+        setSelectedRisk(value);
+        setTimeout(updateFilters, 0);
+    };
+
+    const handleAPYRangeChange = (value: string) => {
+        setSelectedAPYRange(value);
+        setTimeout(updateFilters, 0);
+    };
+
     const clearAllFilters = () => {
-        setSelectedOrigin('all');
-        setSelectedDestination('all');
-        setSelectedStatus('all');
-        setSelectedTransport('all');
         setSelectedMinInvestment('all');
+        setSelectedRisk('all');
+        setSelectedAPYRange('all');
         onFilterChange({
             origins: [],
             destinations: [],
             statuses: [],
             transports: [],
             minInvestment: null,
+            risks: [],
+            minAPY: null,
+            maxAPY: null,
         });
     };
 
     const hasActiveFilters =
-        selectedOrigin !== 'all' ||
-        selectedDestination !== 'all' ||
-        selectedStatus !== 'all' ||
-        selectedTransport !== 'all' ||
-        selectedMinInvestment !== 'all';
+        selectedMinInvestment !== 'all' ||
+        selectedRisk !== 'all' ||
+        selectedAPYRange !== 'all';
 
     const getActiveFilterCount = () => {
         let count = 0;
-        if (selectedOrigin !== 'all') count++;
-        if (selectedDestination !== 'all') count++;
-        if (selectedStatus !== 'all') count++;
-        if (selectedTransport !== 'all') count++;
         if (selectedMinInvestment !== 'all') count++;
+        if (selectedRisk !== 'all') count++;
+        if (selectedAPYRange !== 'all') count++;
         return count;
     };
 
@@ -143,88 +143,6 @@ export default function DealFilters({ onFilterChange }: DealFiltersProps) {
 
                 {isExpanded && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-                        {/* Origin Filter */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-2 block">
-                                Origin Country
-                            </label>
-                            <Select value={selectedOrigin} onValueChange={handleOriginChange}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select origin" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Countries</SelectItem>
-                                    <SelectSeparator />
-                                    <SelectItem value="Peru">🇵🇪 Peru</SelectItem>
-                                    <SelectItem value="Portugal">🇵🇹 Portugal</SelectItem>
-                                    <SelectItem value="United States">🇺🇸 United States</SelectItem>
-                                    <SelectItem value="Spain">🇪🇸 Spain</SelectItem>
-                                    <SelectItem value="Israel">🇮🇱 Israel</SelectItem>
-                                    <SelectItem value="Canada">🇨🇦 Canada</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* Destination Filter */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-2 block">
-                                Destination Country
-                            </label>
-                            <Select value={selectedDestination} onValueChange={handleDestinationChange}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select destination" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Countries</SelectItem>
-                                    <SelectSeparator />
-                                    <SelectItem value="Peru">🇵🇪 Peru</SelectItem>
-                                    <SelectItem value="Portugal">🇵🇹 Portugal</SelectItem>
-                                    <SelectItem value="United States">🇺🇸 United States</SelectItem>
-                                    <SelectItem value="Spain">🇪🇸 Spain</SelectItem>
-                                    <SelectItem value="Israel">🇮🇱 Israel</SelectItem>
-                                    <SelectItem value="Canada">🇨🇦 Canada</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* Status Filter */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-2 block">
-                                Deal Status
-                            </label>
-                            <Select value={selectedStatus} onValueChange={handleStatusChange}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Statuses</SelectItem>
-                                    <SelectSeparator />
-                                    <SelectItem value="proposal">🟡 Active</SelectItem>
-                                    <SelectItem value="confirmed">🔵 In Progress</SelectItem>
-                                    <SelectItem value="finished">🟢 Completed</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* Transport Filter */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-2 block">
-                                Transport Type
-                            </label>
-                            <Select value={selectedTransport} onValueChange={handleTransportChange}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select transport" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Types</SelectItem>
-                                    <SelectSeparator />
-                                    <SelectItem value="Sea">🚢 Sea</SelectItem>
-                                    <SelectItem value="Air">✈️ Air</SelectItem>
-                                    <SelectItem value="Land">🚛 Land</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
                         {/* Minimum Investment Filter */}
                         <div>
                             <label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -241,6 +159,46 @@ export default function DealFilters({ onFilterChange }: DealFiltersProps) {
                                     <SelectItem value="100000">💰 $100,000+</SelectItem>
                                     <SelectItem value="250000">💎 $250,000+</SelectItem>
                                     <SelectItem value="500000">💎 $500,000+</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Risk Filter */}
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                Risk Category
+                            </label>
+                            <Select value={selectedRisk} onValueChange={handleRiskChange}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select risk" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Risk Levels</SelectItem>
+                                    <SelectSeparator />
+                                    <SelectItem value="low">🟢 Low Risk</SelectItem>
+                                    <SelectItem value="medium">🟡 Medium Risk</SelectItem>
+                                    <SelectItem value="high">🔴 High Risk</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* APY Range Filter */}
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                APY Range
+                            </label>
+                            <Select value={selectedAPYRange} onValueChange={handleAPYRangeChange}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select APY" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All APY</SelectItem>
+                                    <SelectSeparator />
+                                    <SelectItem value="0-5">📊 0-5%</SelectItem>
+                                    <SelectItem value="5-10">📊 5-10%</SelectItem>
+                                    <SelectItem value="10-15">📈 10-15%</SelectItem>
+                                    <SelectItem value="15-20">📈 15-20%</SelectItem>
+                                    <SelectItem value="20">🚀 20%+</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

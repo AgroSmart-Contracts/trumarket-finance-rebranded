@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DealDetails } from '@/types';
-import { TrendingUp, DollarSign, MapPin } from 'lucide-react';
+import { TrendingUp, DollarSign, Droplets, ShieldAlert } from 'lucide-react';
 import { calculateAPY } from '@/lib/financialCalculations';
 
 interface DealCardProps {
@@ -47,8 +47,24 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
+const getRiskLabel = (risk?: string) => {
+  if (!risk) return 'N/A';
+  return risk.charAt(0).toUpperCase() + risk.slice(1);
+};
+
+const getRiskColor = (risk?: string) => {
+  if (!risk) return 'text-gray-500';
+  const colors = {
+    low: 'text-[#3CA638]',
+    medium: 'text-[#F2A007]',
+    high: 'text-red-600',
+  };
+  return colors[risk as keyof typeof colors] || 'text-gray-500';
+};
+
 export default function DealCard({ deal }: DealCardProps) {
   const apy = calculateAPY(deal);
+  const liquidityPoolSize = deal.liquidityPoolSize || deal.investmentAmount;
 
   return (
     <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-gray-300">
@@ -76,22 +92,33 @@ export default function DealCard({ deal }: DealCardProps) {
             <span className="text-xl font-bold text-[#3CA638]">{apy.toFixed(2)}%</span>
           </div>
 
-          {/* Investment Amount - Always visible */}
+          {/* Total Supplied */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-600">Investment</span>
+              <span className="text-sm text-gray-600">Total Supplied</span>
             </div>
             <span className="text-sm font-semibold">{formatCurrency(deal.investmentAmount)}</span>
           </div>
 
-          {/* Route - Always visible */}
+          {/* Liquidity Pool Size */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-600">Route</span>
+              <Droplets className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-600">Pool Size</span>
             </div>
-            <span className="text-sm font-semibold">{deal.origin} → {deal.destination}</span>
+            <span className="text-sm font-semibold">{formatCurrency(liquidityPoolSize)}</span>
+          </div>
+
+          {/* Risk Category */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-600">Risk</span>
+            </div>
+            <span className={`text-sm font-semibold ${getRiskColor(deal.risk)}`}>
+              {getRiskLabel(deal.risk)}
+            </span>
           </div>
         </div>
       </CardContent>

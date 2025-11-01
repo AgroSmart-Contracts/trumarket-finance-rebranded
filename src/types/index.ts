@@ -48,6 +48,8 @@ export interface DealDetails {
     revenue: number;
     netBalance: number;
     roi: number;
+    risk?: 'low' | 'medium' | 'high';
+    liquidityPoolSize?: number;
     buyers: any[];
     suppliers: any[];
     buyerCompany: any;

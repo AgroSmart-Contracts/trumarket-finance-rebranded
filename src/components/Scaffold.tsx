@@ -16,17 +16,18 @@ const Header: React.FC = () => (
                     </a>
                     <div className="border-l-2 border-gray-300 pl-4">
                         <h1 className="text-2xl font-bold text-[#2D3E57] tracking-tight">
-                            Investment Dashboard
+                            AgroTrade Finance
                         </h1>
-                        <p className="text-sm text-[#6B7280] mt-0.5">
-                            Deal-by-Deal Insights & Analytics
-                        </p>
+                        <div className="flex gap-4 mt-1">
+                            <a href="/" className="text-sm font-medium text-[#3CA638] hover:text-[#2D8828] transition-colors">
+                                Deals
+                            </a>
+                        </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 bg-[#3CA63815] px-4 py-2 rounded-lg border border-[#3CA638]">
-                    <div className="w-2 h-2 bg-[#3CA638] rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-[#2D8828]">Live</span>
-                </div>
+                <button className="bg-[#2D3E57] hover:bg-[#1E2A3A] text-white px-6 py-2.5 rounded-lg font-medium transition-all shadow-md hover:shadow-lg">
+                    Connect Wallet
+                </button>
             </div>
         </div>
     </header>

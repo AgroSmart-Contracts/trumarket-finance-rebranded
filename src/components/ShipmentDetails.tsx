@@ -268,50 +268,8 @@ const ShipmentDetailsPage: React.FC<{ shipment: DealDetails }> = ({
                         )}
                     </div>
 
-                    {/* Documents Grid */}
-                    <div className="document-grid">
-                        {shipment.milestones[activeStep]?.docs.map((doc: any) => {
-                            const isPDF = doc.url?.toLowerCase().endsWith('.pdf');
-                            const isNew = doc.createdAt && new Date(doc.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000; // Last 7 days
 
-                            return (
-                                <div key={doc._id} className="document-item">
-                                    <div className={`document-icon ${isPDF ? 'pdf' : 'doc'}`}>
-                                        {isPDF ? 'PDF' : 'DOC'}
-                                    </div>
-                                    <div className="document-name">
-                                        {doc.description || doc.url?.split('/').pop() || 'Document'}
-                                    </div>
-                                    <a
-                                        href={doc.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="document-action"
-                                    >
-                                        View Document
-                                    </a>
-                                    {isNew && <span className="document-badge new">New</span>}
-                                </div>
-                            );
-                        })}
-                        {(!shipment.milestones[activeStep]?.docs || shipment.milestones[activeStep].docs.length === 0) && (
-                            <div className="col-span-full text-center py-12">
-                                <p className="text-gray-500">No documents available for this milestone</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Download Section */}
-                    {shipment.milestones[activeStep]?.docs && shipment.milestones[activeStep].docs.length > 0 && (
-                        <div className="download-section">
-                            <button className="platform-btn platform-btn-primary download-btn">
-                                📥 Download All Documents
-                                <span className="download-count">{shipment.milestones[activeStep].docs.length}</span>
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Finance Section */}
+                    {/* Finance Section with Deposit */}
                     {shipment.vaultAddress && (
                         <div className="mt-6">
                             <FinanceSection
@@ -319,6 +277,7 @@ const ShipmentDetailsPage: React.FC<{ shipment: DealDetails }> = ({
                                 requestFundAmount={shipment.investmentAmount}
                                 currentMilestone={shipment.currentMilestone}
                                 nftID={shipment.nftID}
+                                deal={shipment}
                             />
                         </div>
                     )}
