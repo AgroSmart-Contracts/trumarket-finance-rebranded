@@ -1,7 +1,7 @@
-import { DealDetails,  DealLog } from '@/types';
+import { DealDetails, DealLog } from '@/types';
 import { dealLogService } from './dealLogService';
 import { MongoClient, ServerApiVersion, Db, ObjectId } from 'mongodb';
-import { config } from '@/config';
+import { serverConfig } from '@/config/serverConfig';
 
 export class DeployedDataService {
     private mongoClient: MongoClient;
@@ -9,7 +9,7 @@ export class DeployedDataService {
 
     constructor() {
         // Initialize MongoDB client
-        this.mongoClient = new MongoClient(config.databaseUrl, {
+        this.mongoClient = new MongoClient(serverConfig.databaseUrl, {
             serverApi: {
                 version: ServerApiVersion.v1,
                 strict: true,

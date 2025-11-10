@@ -1,4 +1,4 @@
-import { config } from '@/config';
+import { serverConfig } from '@/config/serverConfig';
 import { MongoClient, ServerApiVersion, Db, Collection } from 'mongodb';
 import { DealLog } from '@/types';
 
@@ -7,7 +7,7 @@ export class DealLogService {
     private db: Db | null = null;
 
     constructor() {
-        const uri = config.databaseUrl;
+        const uri = serverConfig.databaseUrl;
 
         this.client = new MongoClient(uri, {
             serverApi: {
@@ -25,7 +25,7 @@ export class DealLogService {
 
         try {
             console.log("Connecting to MongoDB...");
-            const uri = config.databaseUrl;
+            const uri = serverConfig.databaseUrl;
 
             this.client = new MongoClient(uri, {
                 serverApi: {

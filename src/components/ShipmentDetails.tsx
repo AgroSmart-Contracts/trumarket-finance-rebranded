@@ -1,30 +1,19 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { DealDetails } from '@/types';
 import { milestones } from '@/lib/static';
 import RecentActivityList from './RecentActivity';
 import FinanceSection from './FinanceSection';
-import { useICPShipment, useICPActivities } from '@/hooks/useICPShipments';
+import { useICPShipment } from '@/hooks/useICPShipments';
 import { formatDate } from '@/lib/dateUtils';
 import {
-    CheckCircle,
-    Clock,
-    Circle,
     DollarSign,
     TrendingUp,
     Calendar,
     Timer,
-    X,
-    Plane,
-    Ship,
-    Package,
-    Truck,
-    Anchor,
     Flag,
-    Leaf,
-    PackageCheck,
     Play
 } from 'lucide-react';
 
@@ -50,19 +39,35 @@ const MilestoneItem: React.FC<MilestoneItemProps> = ({
 }) => {
     return (
         <div
-            className={`milestone-item ${isCompleted ? 'completed' : 'pending'} ${isActive ? 'active' : ''}`}
+            className={`flex items-start justify-between p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 cursor-pointer w-full max-w-full box-border min-w-0 overflow-hidden ${isCompleted
+                ? 'bg-[#dcfce7] border-[#3CA638] hover:bg-[#bbf7d0]'
+                : 'bg-white border-gray-200 opacity-60'
+                }`}
             onClick={onClick}
         >
-            <div className="milestone-icon">
+            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0 mr-2 sm:mr-3 ${isCompleted
+                ? 'bg-[#3CA638] text-white'
+                : 'bg-gray-400 text-gray-50'
+                }`}>
                 {isCompleted ? '✓' : '⏳'}
             </div>
-            <div className="milestone-content">
-                <div className="milestone-name">{milestone.label}</div>
-                {location && <div className="milestone-location-text">{location}</div>}
-                {date && <div className="milestone-date">{date}</div>}
+            <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="font-semibold text-xs sm:text-sm text-[#2D3E57] mb-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                    {milestone.label}
+                </div>
+                {location && (
+                    <div className="text-[10px] sm:text-xs text-gray-500 mb-0.5 overflow-hidden text-ellipsis whitespace-nowrap">
+                        {location}
+                    </div>
+                )}
+                {date && (
+                    <div className="text-[10px] sm:text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
+                        {date}
+                    </div>
+                )}
             </div>
             {docCount !== undefined && docCount > 0 && (
-                <div className="milestone-badge active">
+                <div className="bg-[#3CA638] text-white px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 whitespace-nowrap ml-2">
                     {docCount} Document{docCount !== 1 ? 's' : ''}
                 </div>
             )}
@@ -94,126 +99,130 @@ const ShipmentDetailsPage: React.FC<{ shipment: DealDetails }> = ({
     const daysUntilEnd = shipment.expectedShippingEndDate ? Math.ceil((new Date(shipment.expectedShippingEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 py-8 bg-gray-50">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 bg-gray-50">
             {/* Deal Progress Overview Section */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-300">
-                <div className="flex justify-between items-start mb-6">
-                    <h2 className="text-2xl font-bold text-[#2D3E57]">Deal Progress Overview</h2>
-                    <div className="flex items-center gap-4">
-                        <span className="text-sm text-gray-500">Last Updated: 2 hours ago</span>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-[#3CA63815] rounded-lg border border-[#3CA638]">
-                            <div className="w-5 h-5 bg-[#3CA638] rounded-full flex items-center justify-center">
-                                <Play className="w-3 h-3 text-white fill-current" />
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-300">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4 sm:mb-6">
+                    <h2 className="text-xl sm:text-2xl font-bold text-[#2D3E57]">Deal Progress Overview</h2>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                        <span className="text-xs sm:text-sm text-gray-500">Last Updated: 2 hours ago</span>
+                        <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-[#3CA63815] rounded-lg border border-[#3CA638]">
+                            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-[#3CA638] rounded-full flex items-center justify-center">
+                                <Play className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white fill-current" />
                             </div>
-                            <span className="text-[#2D8828] font-semibold text-sm">Active Deal</span>
+                            <span className="text-[#2D8828] font-semibold text-xs sm:text-sm">Active Deal</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Key Metrics Grid */}
-                <div className="grid grid-cols-4 gap-4 mb-6">
-                    <div className="bg-[#4EA4D915] rounded-xl p-4 border border-[#4EA4D9]">
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-sm font-medium text-[#4EA4D9]">Deal Value</span>
-                            <DollarSign className="w-5 h-5 text-[#4EA4D9]" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
+                    <div className="bg-[#4EA4D915] rounded-xl p-2 sm:p-4 border border-[#4EA4D9]">
+                        <div className="flex justify-between items-start mb-1 sm:mb-2">
+                            <span className="text-xs sm:text-sm font-medium text-[#4EA4D9]">Deal Value</span>
+                            <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-[#4EA4D9]" />
                         </div>
-                        <div className="text-2xl font-bold text-[#2D3E57]">
+                        <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#2D3E57]">
                             ${(dealValue / 1000).toFixed(0)}K
                         </div>
                     </div>
-                    <div className="bg-[#3CA63815] rounded-xl p-4 border border-[#3CA638]">
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-sm font-medium text-[#3CA638]">Progress</span>
-                            <TrendingUp className="w-5 h-5 text-[#3CA638]" />
+                    <div className="bg-[#3CA63815] rounded-xl p-2 sm:p-4 border border-[#3CA638]">
+                        <div className="flex justify-between items-start mb-1 sm:mb-2">
+                            <span className="text-xs sm:text-sm font-medium text-[#3CA638]">Progress</span>
+                            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#3CA638]" />
                         </div>
-                        <div className="text-2xl font-bold text-[#2D3E57]">{progress}%</div>
+                        <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#2D3E57]">{progress}%</div>
                     </div>
-                    <div className="bg-[#F2A00715] rounded-xl p-4 border border-[#F2A007]">
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-sm font-medium text-[#F2A007]">Days Elapsed</span>
-                            <Calendar className="w-5 h-5 text-[#F2A007]" />
+                    <div className="bg-[#F2A00715] rounded-xl p-2 sm:p-4 border border-[#F2A007]">
+                        <div className="flex justify-between items-start mb-1 sm:mb-2">
+                            <span className="text-xs sm:text-sm font-medium text-[#F2A007]">Days Elapsed</span>
+                            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-[#F2A007]" />
                         </div>
-                        <div className="text-2xl font-bold text-[#2D3E57]">{daysSinceStart}</div>
+                        <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#2D3E57]">{daysSinceStart}</div>
                     </div>
-                    <div className="bg-[#4EA4D915] rounded-xl p-4 border border-[#4EA4D9]">
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-sm font-medium text-[#4EA4D9]">ETA</span>
-                            <Timer className="w-5 h-5 text-[#4EA4D9]" />
+                    <div className="bg-[#4EA4D915] rounded-xl p-2 sm:p-4 border border-[#4EA4D9]">
+                        <div className="flex justify-between items-start mb-1 sm:mb-2">
+                            <span className="text-xs sm:text-sm font-medium text-[#4EA4D9]">ETA</span>
+                            <Timer className="w-4 h-4 sm:w-5 sm:h-5 text-[#4EA4D9]" />
                         </div>
-                        <div className="text-2xl font-bold text-[#2D3E57]">{daysUntilEnd} days</div>
+                        <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#2D3E57]">{daysUntilEnd} days</div>
                     </div>
                 </div>
 
                 {/* Deal Information Card */}
-                <div className="bg-gradient-to-r from-[#4EA4D910] to-[#3CA63810] rounded-xl p-6 border border-gray-300 cursor-pointer hover:shadow-md transition-shadow">
+                <div className="bg-gradient-to-r from-[#4EA4D910] to-[#3CA63810] rounded-xl p-4 sm:p-6 border border-gray-300 cursor-pointer hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                            <h3 className="text-xl font-bold text-[#2D3E57] mb-3">{shipment.name}</h3>
-                            <div className="grid grid-cols-2 gap-4">
+                        <div className="flex-1 w-full">
+                            <h3 className="text-lg sm:text-xl font-bold text-[#2D3E57] mb-3">{shipment.name}</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <Flag className="w-4 h-4 text-red-600" />
-                                        <span className="text-sm font-semibold text-gray-900">{shipment.origin}</span>
+                                        <Flag className="w-3 h-3 sm:w-4 sm:h-4 text-red-600 flex-shrink-0" />
+                                        <span className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{shipment.origin}</span>
                                     </div>
-                                    <p className="text-sm text-gray-600">{shipment.portOfOrigin} • {formatDate(shipment.shippingStartDate)} ETD</p>
+                                    <p className="text-xs sm:text-sm text-gray-600 break-words">{shipment.portOfOrigin} • {formatDate(shipment.shippingStartDate)} ETD</p>
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <Flag className="w-4 h-4 text-blue-600" />
-                                        <span className="text-sm font-semibold text-gray-900">{shipment.destination}</span>
+                                        <Flag className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 flex-shrink-0" />
+                                        <span className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{shipment.destination}</span>
                                     </div>
-                                    <p className="text-sm text-gray-600">ETA {formatDate(shipment.expectedShippingEndDate)}</p>
+                                    <p className="text-xs sm:text-sm text-gray-600">ETA {formatDate(shipment.expectedShippingEndDate)}</p>
                                 </div>
                             </div>
-                            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                                <div className="flex items-center gap-2 text-gray-600">
-                                    <strong className="text-gray-900">Supplier:</strong>
-                                    <span>rony@villaventurapro.com</span>
+                            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
+                                    <strong className="text-gray-900 flex-shrink-0">Supplier:</strong>
+                                    <span className="break-all">rony@villaventurapro.com</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-gray-600">
-                                    <strong className="text-gray-900">Quality:</strong>
-                                    <span>{shipment.quality}</span>
+                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
+                                    <strong className="text-gray-900 flex-shrink-0">Quality:</strong>
+                                    <span className="break-words">{shipment.quality}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-gray-600">
-                                    <strong className="text-gray-900">Value:</strong>
+                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
+                                    <strong className="text-gray-900 flex-shrink-0">Value:</strong>
                                     <span>${dealValue.toFixed(2)}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-gray-600">
-                                    <strong className="text-gray-900">Offer Unit Price:</strong>
+                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
+                                    <strong className="text-gray-900 flex-shrink-0">Offer Unit Price:</strong>
                                     <span>${shipment.offerUnitPrice}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-gray-600">
-                                    <strong className="text-gray-900">Quantity:</strong>
+                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
+                                    <strong className="text-gray-900 flex-shrink-0">Quantity:</strong>
                                     <span>{shipment.quantity.toLocaleString()}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-gray-600">
-                                    <strong className="text-gray-900">Transport:</strong>
-                                    <span>{shipment.transport}</span>
+                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
+                                    <strong className="text-gray-900 flex-shrink-0">Transport:</strong>
+                                    <span className="break-words">{shipment.transport}</span>
                                 </div>
                             </div>
-                            <p className="text-xs text-gray-500 mt-2">Identifier: #{shipment.id.slice(0, 24)}</p>
+                            <p className="text-xs text-gray-500 mt-2 break-all">Identifier: #{shipment.id.slice(0, 24)}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Tracking Layout */}
-            <div className="platform-sidebar-layout bg-white rounded-lg shadow-sm">
+            <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-4 lg:gap-8 bg-white rounded-lg shadow-sm">
                 {/* Left Sidebar - Milestone Timeline */}
-                <div className="platform-sidebar">
-                    <h3 className="sidebar-title">Milestone Timeline</h3>
+                <div className="bg-white lg:border-r lg:border-gray-200 p-4 lg:p-6 w-full max-w-full lg:max-w-[350px] box-border min-w-0 overflow-hidden">
+                    <h3 className="text-base sm:text-xl font-bold text-[#2D3E57] mb-4 sm:mb-6">Milestone Timeline</h3>
 
                     {/* Origin Location */}
-                    <div className="milestone-location">
-                        <span className="flag">📍</span>
-                        <div>
-                            <div className="location-name">{shipment.origin}</div>
-                            <div className="location-date">{formatDate(shipment.shippingStartDate)}</div>
+                    <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg mb-4 sm:mb-6 box-border overflow-hidden">
+                        <span className="text-2xl sm:text-3xl flex-shrink-0">📍</span>
+                        <div className="flex-1 overflow-hidden">
+                            <div className="text-xs sm:text-sm font-semibold text-[#2D3E57] overflow-hidden text-ellipsis whitespace-nowrap">
+                                {shipment.origin}
+                            </div>
+                            <div className="text-[10px] sm:text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
+                                {formatDate(shipment.shippingStartDate)}
+                            </div>
                         </div>
                     </div>
 
                     {/* Milestone List */}
-                    <div className="milestone-list">
+                    <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-full box-border min-w-0">
                         {milestones.map((milestone, index) => {
                             const isCompleted = index <= shipment.currentMilestone;
                             const isActive = index === activeStep;
@@ -235,35 +244,41 @@ const ShipmentDetailsPage: React.FC<{ shipment: DealDetails }> = ({
                     </div>
 
                     {/* Destination Location */}
-                    <div className="milestone-location">
-                        <span className="flag">📍</span>
-                        <div>
-                            <div className="location-name">{shipment.destination}</div>
-                            <div className="location-date">ETA: {formatDate(shipment.expectedShippingEndDate)}</div>
+                    <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg mt-4 sm:mt-6 box-border overflow-hidden">
+                        <span className="text-2xl sm:text-3xl flex-shrink-0">📍</span>
+                        <div className="flex-1 overflow-hidden">
+                            <div className="text-xs sm:text-sm font-semibold text-[#2D3E57] overflow-hidden text-ellipsis whitespace-nowrap">
+                                {shipment.destination}
+                            </div>
+                            <div className="text-[10px] sm:text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
+                                ETA: {formatDate(shipment.expectedShippingEndDate)}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Right Main Content */}
-                <div className="platform-main-content">
+                <div className="bg-white p-4 sm:p-6 lg:p-8">
                     {/* Milestone Header */}
-                    <div className="milestone-header">
-                        <div className="milestone-header-left">
-                            <div className="milestone-icon-large">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 sm:mb-8 pb-4 sm:pb-6 border-b-2 border-gray-200">
+                        <div className="flex gap-3 sm:gap-4 items-start">
+                            <div className="text-3xl sm:text-4xl bg-[#dcfce7] w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center flex-shrink-0">
                                 {activeMilestone?.emoji || '🌱'}
                             </div>
                             <div>
-                                <h2 className="milestone-title">
+                                <h2 className="text-lg sm:text-2xl font-bold text-[#2D3E57] mb-1 sm:mb-2">
                                     {activeStep === 7 ? 'Shipment Completed' : activeMilestone?.label || 'Milestone'}
                                 </h2>
-                                <div className="milestone-subtitle">
+                                <div className="text-xs sm:text-sm text-gray-500">
                                     {shipment.origin} • {formatDate(shipment.shippingStartDate)}
                                 </div>
                             </div>
                         </div>
                         {shipment.currentMilestone >= activeStep && activeStep < 7 && (
-                            <div className="milestone-header-right">
-                                <div className="milestone-approval-badge">Status: In Progress</div>
+                            <div className="flex gap-4 items-center">
+                                <div className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-100 rounded-md text-xs sm:text-sm font-semibold text-[#2D3E57]">
+                                    Status: In Progress
+                                </div>
                             </div>
                         )}
                     </div>

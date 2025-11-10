@@ -111,7 +111,7 @@ export default function DealsInvestorDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F2F2F2]">
-      <main className="container mx-auto py-8">
+      <main className="container mx-auto py-8 px-4 sm:px-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-[#4EA4D9]">
@@ -195,11 +195,12 @@ export default function DealsInvestorDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                 {filteredDeals.filter(d => d.status !== 'finished').map((deal) => (
                   <div
                     key={deal.id}
                     onClick={() => router.push(`/shipments/${deal.id}`)}
+                    className="w-full"
                   >
                     <DealCard deal={deal} />
                   </div>

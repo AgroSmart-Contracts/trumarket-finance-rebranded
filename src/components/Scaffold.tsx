@@ -1,37 +1,44 @@
 'use client';
 
-import React from 'react';
-
-const Header: React.FC = () => (
-    <header className="bg-gradient-to-r from-white to-gray-50 shadow-md border-b-2 border-[#3CA638] sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <a href="/">
-                        <img
-                            src="/logo.svg"
-                            alt="Trumarket Logo"
-                            className="h-12 w-auto cursor-pointer"
-                        />
-                    </a>
-                    <div className="border-l-2 border-gray-300 pl-4">
-                        <h1 className="text-2xl font-bold text-[#2D3E57] tracking-tight">
-                            AgroTrade Finance
-                        </h1>
-                        <div className="flex gap-4 mt-1">
-                            <a href="/" className="text-sm font-medium text-[#3CA638] hover:text-[#2D8828] transition-colors">
+const Header: React.FC = () => {
+    return (
+        <header className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-sm border-b-2 border-[#3CA638]">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        <a href="/" className="flex-shrink-0">
+                            <img
+                                src="/logo.svg"
+                                alt="Trumarket Logo"
+                                className="h-8 sm:h-10 lg:h-12 w-auto cursor-pointer"
+                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                            />
+                        </a>
+                        <div className="hidden sm:block border-l-2 border-gray-300 pl-3 sm:pl-4">
+                            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-[#2D3E57] tracking-tight">
+                                AgroTrade Finance
+                            </h1>
+                            <div className="flex gap-2 sm:gap-4 mt-0.5 sm:mt-1">
+                                <a href="/" className="text-xs sm:text-sm font-medium text-[#3CA638] hover:text-[#2D8828] transition-colors">
+                                    Deals
+                                </a>
+                            </div>
+                        </div>
+                        {/* Mobile: Show title without border */}
+                        <div className="sm:hidden">
+                            <h1 className="text-base font-bold text-[#2D3E57] tracking-tight">
+                                AgroTrade Finance
+                            </h1>
+                            <a href="/" className="text-xs font-medium text-[#3CA638] hover:text-[#2D8828] transition-colors">
                                 Deals
                             </a>
                         </div>
                     </div>
                 </div>
-                <button className="bg-[#2D3E57] hover:bg-[#1E2A3A] text-white px-6 py-2.5 rounded-lg font-medium transition-all shadow-md hover:shadow-lg">
-                    Connect Wallet
-                </button>
             </div>
-        </div>
-    </header>
-);
+        </header>
+    );
+};
 
 const Footer: React.FC = () => (
     <footer className="bg-gray-50 border-t border-border">
@@ -82,7 +89,7 @@ const Scaffold: React.FC<React.PropsWithChildren> = ({ children }) => {
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <Header />
-            <main className="flex-grow">
+            <main className="flex-grow pt-16 sm:pt-20">
                 {children}
             </main>
             <Footer />
