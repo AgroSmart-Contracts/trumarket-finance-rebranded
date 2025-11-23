@@ -8,9 +8,9 @@ import { DealDetails } from '@/types';
  * These need to be replaced with actual calculations based on real data.
  * 
  * Current fake values:
- * - APY: 8-18% (based on contract ID)
- * - Revenue: 8-18% of investment amount
- * - ROI: 8-18%
+ * - APY: 15% (flat rate)
+ * - Revenue: 0.15 × AUM (investmentAmount)
+ * - ROI: 15% (flat rate)
  */
 
 /**
@@ -18,9 +18,8 @@ import { DealDetails } from '@/types';
  * TEMPORARY: Returns fake constant values for testing
  */
 export function calculateRevenue(deal: DealDetails): number {
-    // Return fake revenue based on investment amount (5-15% return)
-    const fakeReturnRate = 0.08 + (Math.abs(deal.contractId) % 10) * 0.01; // 8-18%
-    return Math.round(deal.investmentAmount * fakeReturnRate);
+    // Return 15% of AUM (investment amount)
+    return Math.round(deal.investmentAmount * 0.15);
 }
 
 /**
@@ -28,10 +27,8 @@ export function calculateRevenue(deal: DealDetails): number {
  * TEMPORARY: Returns fake constant values for testing
  */
 export function calculateAPY(deal: DealDetails): number {
-    // Return fake APY between 8-18%
-    const baseAPY = 8;
-    const variance = (Math.abs(deal.contractId) % 11); // 0-10
-    return Number((baseAPY + variance).toFixed(2));
+    // Return flat 15% APY
+    return 15;
 }
 
 /**
@@ -41,10 +38,8 @@ export function calculateAPY(deal: DealDetails): number {
 export function calculateROI(deal: DealDetails): number {
     if (deal.investmentAmount === 0) return 0;
 
-    // Return fake ROI between 8-18%
-    const baseROI = 8;
-    const variance = (Math.abs(deal.contractId) % 11); // 0-10
-    return Number((baseROI + variance).toFixed(2));
+    // Return flat 15% ROI
+    return 15;
 }
 
 /**
@@ -54,10 +49,8 @@ export function calculateROI(deal: DealDetails): number {
 export function calculateAnnualizedReturn(deal: DealDetails): number {
     if (deal.investmentAmount === 0) return 0;
 
-    // Return fake annualized return between 8-18%
-    const baseReturn = 8;
-    const variance = (Math.abs(deal.contractId) % 11); // 0-10
-    return Number((baseReturn + variance).toFixed(2));
+    // Return flat 15% annualized return
+    return 15;
 }
 
 /**
