@@ -1,23 +1,37 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TrendingUp, Clock, Calendar, Shield } from 'lucide-react';
 import { DealDetails } from '@/types';
 import { calculateAPY } from '@/lib/financialCalculations';
-import { InfoCard } from '@/components/ui/InfoCard';
-import { MetricDisplay } from '@/components/ui/MetricDisplay';
-import { RiskBadge } from '@/components/ui/RiskBadge';
-import { Badge } from '@/components/ui/badge';
-import { INVESTMENT, TYPOGRAPHY } from '@/lib/constants';
+import { formatDate } from '@/lib/formatters';
+import { getStatusLabel, calculateDuration } from '@/lib/dealUtils';
+import { InfoCard, MetricDisplay, RiskBadge, Badge } from '@/components/ui';
+import { TYPOGRAPHY } from '@/lib/constants';
 
 interface DealOverviewCardProps {
     shipment: DealDetails;
 }
 
 export const DealOverviewCard: React.FC<DealOverviewCardProps> = ({ shipment }) => {
-    const apy = calculateAPY(shipment);
+    const apy = useMemo(() => calculateAPY(shipment), [shipment]);
+    const statusLabel = useMemo(
+        () => getStatusLabel(shipment.status, shipment.currentMilestone || 0),
+        [shipment.status, shipment.currentMilestone]
+    );
+    const maturityDate = useMemo(
+        () => shipment.expectedShippingEndDate ? formatDate(shipment.expectedShippingEndDate) : 'N/A',
+        [shipment.expectedShippingEndDate]
+    );
+    const duration = useMemo(
+        () => shipment.shippingStartDate && shipment.expectedShippingEndDate
+            ? calculateDuration(shipment.shippingStartDate, shipment.expectedShippingEndDate)
+            : 0,
+        [shipment.shippingStartDate, shipment.expectedShippingEndDate]
+    );
+    const risk = shipment.risk || 'low';
 
     return (
         <InfoCard style={{ padding: '25px 25px 25px', gap: '24px' }}>
-            <div className="flex flex-col gap-3 mb-6">
+            <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3 flex-wrap">
                     <h1
                         className="text-base leading-6 font-normal text-[#0F172B]"
@@ -25,16 +39,17 @@ export const DealOverviewCard: React.FC<DealOverviewCardProps> = ({ shipment }) 
                     >
                         {shipment.name}
                     </h1>
-                    <Badge variant="status">Active</Badge>
+                    <Badge variant="status">{statusLabel}</Badge>
                     <Badge variant="commodity">{shipment.origin || 'Grain'}</Badge>
                 </div>
-                <p
-                    className="text-base leading-6 font-normal text-[#62748E]"
-                    style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
-                >
-                    Investment opportunity in Brazilian agricultural commodities with
-                    institutional grade collateral
-                </p>
+                {shipment.description && (
+                    <p
+                        className="text-base leading-6 font-normal text-[#62748E]"
+                        style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
+                    >
+                        {shipment.description}
+                    </p>
+                )}
             </div>
 
             {/* Key Metrics */}
@@ -48,14 +63,14 @@ export const DealOverviewCard: React.FC<DealOverviewCardProps> = ({ shipment }) 
                 />
                 <MetricDisplay
                     label="Duration"
-                    value={`${INVESTMENT.DEAL_DURATION_DAYS} days`}
+                    value={duration > 0 ? `${duration} days` : 'N/A'}
                     icon={Clock}
                     iconColor="#BDD156"
                     iconBackgroundColor="#F7FEE7"
                 />
                 <MetricDisplay
                     label="Maturity Date"
-                    value="June 15, 2026"
+                    value={maturityDate}
                     icon={Calendar}
                     iconColor="#EEBA32"
                     iconBackgroundColor="#FFFBEB"
@@ -72,7 +87,7 @@ export const DealOverviewCard: React.FC<DealOverviewCardProps> = ({ shipment }) 
                         >
                             Risk Tier
                         </div>
-                        <RiskBadge risk="low" showLabel />
+                        <RiskBadge risk={risk} showLabel />
                     </div>
                 </div>
             </div>

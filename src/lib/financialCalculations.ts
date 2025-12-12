@@ -112,3 +112,16 @@ export function calculatePortfolioMetrics(deals: DealDetails[]) {
     };
 }
 
+import { INVESTMENT } from './constants';
+
+/**
+ * Calculate investment limits based on deal amount
+ * Min investment is 10% of deal amount, max is 100% of deal amount
+ */
+export function calculateInvestmentLimits(dealAmount: number): { min: number; max: number } {
+    const min = dealAmount > 0 ? dealAmount * 0.1 : INVESTMENT.MIN_INVESTMENT;
+    const max = dealAmount || INVESTMENT.MAX_INVESTMENT;
+
+    return { min, max };
+}
+

@@ -1,13 +1,13 @@
-import React from 'react';
-import { InfoCard } from '@/components/ui/InfoCard';
-import { SectionHeader } from '@/components/ui/SectionHeader';
-import { DealTermRow } from '@/components/ui/DealTermRow';
-import { RiskBadge } from '@/components/ui/RiskBadge';
+import React, { useMemo } from 'react';
+import { DealDetails } from '@/types';
+import { InfoCard, SectionHeader, DealTermRow, RiskBadge } from '@/components/ui';
 import { formatCurrency } from '@/lib/formatters';
-import { INVESTMENT, COLORS, TYPOGRAPHY } from '@/lib/constants';
+import { calculateInvestmentLimits } from '@/lib/financialCalculations';
+import { COLORS, TYPOGRAPHY } from '@/lib/constants';
 
 interface FinancialInformationCardProps {
     apy: number;
+    shipment: DealDetails;
 }
 
 interface LegendItemProps {
@@ -60,11 +60,27 @@ const MetricItem: React.FC<MetricItemProps> = ({ label, value, isPositive = fals
     </div>
 );
 
-export const FinancialInformationCard: React.FC<FinancialInformationCardProps> = ({ apy }) => {
-    const principalInvested = INVESTMENT.DEFAULT_PRINCIPAL;
-    const totalReturnAmount = INVESTMENT.DEFAULT_TOTAL_RETURN;
-    const principalRequired = INVESTMENT.DEFAULT_PRINCIPAL_REQUIRED;
-    const minInvestment = INVESTMENT.MIN_INVESTMENT;
+export const FinancialInformationCard: React.FC<FinancialInformationCardProps> = ({ apy, shipment }) => {
+    // Use actual data from shipment
+    const principalInvested = shipment.investmentAmount || 0;
+    const revenue = shipment.revenue || 0;
+    const principalRequired = shipment.liquidityPoolSize || shipment.investmentAmount || 0;
+    const risk = shipment.risk || 'low';
+
+    // Calculate investment limits using utility function
+    const { min: minInvestment, max: maxInvestment } = useMemo(
+        () => calculateInvestmentLimits(principalInvested),
+        [principalInvested]
+    );
+
+    // Total return is principal + revenue, or use a calculated total if available
+    const totalReturnAmount = useMemo(
+        () => Math.max(principalInvested + revenue, principalInvested * (1 + apy / 100)) || principalInvested || 1,
+        [principalInvested, revenue, apy]
+    );
+
+    // Prevent division by zero in chart calculations
+    const safeTotal = useMemo(() => (totalReturnAmount > 0 ? totalReturnAmount : 1), [totalReturnAmount]);
 
     const calculateCircumference = (radius: number) => 2 * Math.PI * radius;
 
@@ -88,7 +104,7 @@ export const FinancialInformationCard: React.FC<FinancialInformationCardProps> =
                             fill="none"
                             stroke={COLORS.primary.green}
                             strokeWidth="10"
-                            strokeDasharray={`${(principalInvested / totalReturnAmount) *
+                            strokeDasharray={`${(principalInvested / safeTotal) *
                                 calculateCircumference(106)
                                 } ${calculateCircumference(106)}`}
                         />
@@ -99,10 +115,10 @@ export const FinancialInformationCard: React.FC<FinancialInformationCardProps> =
                             fill="none"
                             stroke={COLORS.chart.green}
                             strokeWidth="5"
-                            strokeDasharray={`${(principalRequired / totalReturnAmount) *
+                            strokeDasharray={`${(principalRequired / safeTotal) *
                                 calculateCircumference(101)
                                 } ${calculateCircumference(101)}`}
-                            strokeDashoffset={`${(principalInvested / totalReturnAmount) *
+                            strokeDashoffset={`${(principalInvested / safeTotal) *
                                 calculateCircumference(101)
                                 }`}
                         />
@@ -115,7 +131,7 @@ export const FinancialInformationCard: React.FC<FinancialInformationCardProps> =
                             strokeWidth="5"
                             strokeDasharray={`${(apy / 100) * calculateCircumference(96)
                                 } ${calculateCircumference(96)}`}
-                            strokeDashoffset={`${((principalInvested + principalRequired) / totalReturnAmount) *
+                            strokeDashoffset={`${((principalInvested + principalRequired) / safeTotal) *
                                 calculateCircumference(96)
                                 }`}
                         />
@@ -126,7 +142,7 @@ export const FinancialInformationCard: React.FC<FinancialInformationCardProps> =
                             fill="none"
                             stroke={COLORS.chart.red}
                             strokeWidth="5"
-                            strokeDasharray={`${(minInvestment / totalReturnAmount) * calculateCircumference(91)
+                            strokeDasharray={`${(minInvestment / safeTotal) * calculateCircumference(91)
                                 } ${calculateCircumference(91)}`}
                         />
                     </svg>
@@ -168,10 +184,10 @@ export const FinancialInformationCard: React.FC<FinancialInformationCardProps> =
                                 className="text-sm leading-5 font-normal text-[#314158]"
                                 style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tighter }}
                             >
-                                Risk Level: Low Risk
+                                Risk Level: {risk.charAt(0).toUpperCase() + risk.slice(1)} Risk
                             </span>
                         </div>
-                        <RiskBadge risk="low" />
+                        <RiskBadge risk={risk} />
                     </div>
                 </div>
             </div>
@@ -186,24 +202,40 @@ export const FinancialInformationCard: React.FC<FinancialInformationCardProps> =
                 <DealTermRow label="Performance Fee" value="0%" />
                 <DealTermRow
                     label="Min Investment"
-                    value={formatCurrency(INVESTMENT.MIN_INVESTMENT)}
+                    value={formatCurrency(minInvestment)}
                 />
                 <DealTermRow
                     label="Max Investment"
-                    value={formatCurrency(INVESTMENT.MAX_INVESTMENT)}
+                    value={formatCurrency(maxInvestment)}
                 />
             </div>
 
             {/* Historical Performance */}
-            <div className="pt-[25px] border-t border-[#E2E8F0] flex flex-col gap-4">
-                <SectionHeader>Historical Performance</SectionHeader>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <MetricItem label="Avg Historical Yield" value="8.7%" isPositive />
-                    <MetricItem label="Previous Deals" value="12" />
-                    <MetricItem label="Default Rate" value="0%" isPositive />
-                    <MetricItem label="Avg Time to Maturity" value="175 days" />
+            {shipment.roi !== undefined && (
+                <div className="pt-[25px] border-t border-[#E2E8F0] flex flex-col gap-4">
+                    <SectionHeader>Historical Performance</SectionHeader>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <MetricItem
+                            label="Expected ROI"
+                            value={`${shipment.roi.toFixed(1)}%`}
+                            isPositive={shipment.roi > 0}
+                        />
+                        <MetricItem
+                            label="Net Balance"
+                            value={formatCurrency(shipment.netBalance || 0)}
+                        />
+                        <MetricItem
+                            label="Revenue"
+                            value={formatCurrency(shipment.revenue || 0)}
+                            isPositive={shipment.revenue > 0}
+                        />
+                        <MetricItem
+                            label="Investment Amount"
+                            value={formatCurrency(shipment.investmentAmount || 0)}
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
         </InfoCard>
     );
 };

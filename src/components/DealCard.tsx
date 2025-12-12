@@ -6,6 +6,7 @@ import { DealDetails } from '@/types';
 import { TrendingUp, DollarSign, Droplets, ShieldAlert, ArrowRight, CircleCheckBig } from 'lucide-react';
 import { calculateAPY } from '@/lib/financialCalculations';
 import { formatCurrency } from '@/lib/formatters';
+import { getStatusLabel } from '@/lib/dealUtils';
 
 interface DealCardProps {
   deal: DealDetails;
@@ -26,18 +27,6 @@ const getStatusColor = (status: string, currentMilestone: number) => {
   }
 };
 
-const getStatusLabel = (status: string, currentMilestone: number) => {
-  switch (status) {
-    case 'proposal':
-      return 'Active';
-    case 'confirmed':
-      return currentMilestone === 0 ? 'Active' : 'In Progress';
-    case 'finished':
-      return 'Completed';
-    default:
-      return status;
-  }
-};
 
 const getRiskLabel = (risk?: string) => {
   if (!risk) return 'N/A';

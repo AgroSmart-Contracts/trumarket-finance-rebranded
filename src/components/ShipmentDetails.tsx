@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { DealDetails } from '@/types';
 import { useICPShipment } from '@/hooks/useICPShipments';
-import { calculateAPY } from '@/lib/financialCalculations';
+import { calculateAPY, calculateInvestmentLimits } from '@/lib/financialCalculations';
 import { parseNumericString, formatCurrency } from '@/lib/formatters';
 import {
     HEADER_HEIGHT,
@@ -74,9 +74,12 @@ const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipment }) =
 
     const investmentCalculations = calculateInvestmentReturns(investmentAmount, apy);
 
+    // Calculate investment limits based on deal amount
+    const { min: minInvestment, max: maxInvestment } = calculateInvestmentLimits(shipment.investmentAmount || 0);
+
     // Calculate if invest button should be enabled
     const investmentValue = parseNumericString(investmentAmount);
-    const isInvestButtonEnabled = investmentValue >= INVESTMENT.MIN_INVESTMENT && investmentValue <= INVESTMENT.MAX_INVESTMENT;
+    const isInvestButtonEnabled = investmentValue >= minInvestment && investmentValue <= maxInvestment;
 
     const handleCopy = useCallback(() => {
         if (shipment.vaultAddress) {
@@ -92,10 +95,11 @@ const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipment }) =
 
     const handleInvest = useCallback(() => {
         const investmentValue = parseNumericString(investmentAmount);
-        if (investmentValue >= INVESTMENT.MIN_INVESTMENT && investmentValue <= INVESTMENT.MAX_INVESTMENT) {
+        const { min, max } = calculateInvestmentLimits(shipment.investmentAmount || 0);
+        if (investmentValue >= min && investmentValue <= max) {
             setShowReview(true);
         }
-    }, [investmentAmount]);
+    }, [investmentAmount, shipment.investmentAmount]);
 
     const handleGoBack = useCallback(() => {
         setShowReview(false);
@@ -161,7 +165,7 @@ const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipment }) =
                         className="bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-10 px-4 sm:px-8 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
                         disabled={!isInvestButtonEnabled}
-                        title={!isInvestButtonEnabled ? `Minimum investment is ${formatCurrency(INVESTMENT.MIN_INVESTMENT)}` : undefined}
+                        title={!isInvestButtonEnabled ? `Minimum investment is ${formatCurrency(minInvestment)}` : undefined}
                     >
                         Invest Now
                     </Button>
@@ -177,11 +181,12 @@ const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipment }) =
                 <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
                     {/* Left Column */}
                     <div className="flex-1 flex flex-col gap-6">
-                        <FinancialInformationCard apy={apy} />
+                        <FinancialInformationCard apy={apy} shipment={shipment} />
                         <InvestmentAmountCard
                             investmentAmount={investmentAmount}
                             setInvestmentAmount={setInvestmentAmount}
                             onQuickAmount={handleQuickAmount}
+                            shipment={shipment}
                         />
                         <InvestmentSummaryCard
                             apy={apy}

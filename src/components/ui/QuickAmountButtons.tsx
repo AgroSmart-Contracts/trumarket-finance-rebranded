@@ -7,6 +7,7 @@ interface QuickAmountButtonsProps {
     onSelect: (amount: number) => void;
     amounts?: number[];
     className?: string;
+    minAmount?: number;
 }
 
 const defaultAmounts = [
@@ -23,20 +24,27 @@ export const QuickAmountButtons: React.FC<QuickAmountButtonsProps> = ({
     onSelect,
     amounts = defaultAmounts,
     className,
+    minAmount,
 }) => {
-    const getLabel = (amount: number) => {
-        if (amount === INVESTMENT.MIN_INVESTMENT) {
+    const getLabel = (amount: number, index: number) => {
+        // Check if this is the minimum amount
+        const isMinAmount = (minAmount !== undefined && amount === minAmount) || (index === 0 && amounts && amount === amounts[0]);
+
+        if (isMinAmount) {
             return `Min: ${formatCurrency(amount)}`;
         }
+
+        // Format large amounts
         if (amount >= 1000000) {
             return `$${(amount / 1000000).toFixed(0)}M`;
         }
+
         return `$${(amount / 1000).toFixed(0)}K`;
     };
 
     return (
-        <div className={className || 'flex flex-wrap gap-2 sm:gap-3'}>
-            {amounts.map((amount) => (
+        <div className={className || 'flex flex-wrap px-8 justify-between'}>
+            {amounts.map((amount, index) => (
                 <Button
                     key={amount}
                     variant="outline"
@@ -44,7 +52,7 @@ export const QuickAmountButtons: React.FC<QuickAmountButtonsProps> = ({
                     className="flex-1 min-w-[120px] sm:flex-initial bg-[#FAFAFA] border border-[#CAD5E2] text-[#0F172A] hover:bg-gray-50 rounded-md h-10 text-sm sm:text-base"
                     style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
                 >
-                    {getLabel(amount)}
+                    {getLabel(amount, index)}
                 </Button>
             ))}
         </div>

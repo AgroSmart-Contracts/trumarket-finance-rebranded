@@ -18,3 +18,5 @@ export { InfoBox } from './InfoBox';
 export { StepIndicator } from './StepIndicator';
 export { QuickAmountButtons } from './QuickAmountButtons';
 export { Sparkline } from './Sparkline';
+export { CurrencyInput } from './CurrencyInput';
+export { InvestmentInfoDisplay } from './InvestmentInfoDisplay';
