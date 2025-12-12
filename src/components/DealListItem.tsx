@@ -2,51 +2,26 @@
 
 import { DealDetails } from '@/types';
 import { calculateAPY } from '@/lib/financialCalculations';
-import { ArrowRight, CircleCheckBig } from 'lucide-react';
+import { formatCurrency } from '@/lib/formatters';
+import { ArrowRight, CircleCheckBig, TrendingUp, DollarSign, Circle, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { RiskBadge } from '@/components/ui/RiskBadge';
+import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { MetricDisplay } from '@/components/ui/MetricDisplay';
+import { ProgressBar } from '@/components/ui/ProgressBar';
 
 interface DealListItemProps {
     deal: DealDetails;
     onClick: () => void;
 }
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(amount);
-};
-
-const getRiskBadge = (risk?: string) => {
-    if (!risk) return <span className="text-sm text-gray-500">N/A</span>;
-
-    const riskColors = {
-        low: 'bg-[#4E8C3720] text-[#3A6A28] border-[#4E8C37]',
-        medium: 'bg-[#F2A00720] text-[#D48806] border-[#F2A007]',
-        high: 'bg-red-50 text-red-700 border-red-300',
-    };
-
-    const riskLabels = {
-        low: 'Low',
-        medium: 'Medium',
-        high: 'High',
-    };
-
-    return (
-        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${riskColors[risk as keyof typeof riskColors]}`}>
-            {riskLabels[risk as keyof typeof riskLabels]}
-        </span>
-    );
-};
-
 export default function DealListItem({ deal, onClick }: DealListItemProps) {
     const apy = calculateAPY(deal);
-    const liquidityPoolSize = deal.liquidityPoolSize || deal.investmentAmount;
 
     // Color classes for product badges (inspired by home-next)
     const colorClasses = [
-        "bg-green-100 text-green-600",
+        "bg-[#4E8C3720] text-[#4E8C37]",
         "bg-blue-100 text-blue-600",
         "bg-purple-100 text-purple-600"
     ];
@@ -106,8 +81,8 @@ export default function DealListItem({ deal, onClick }: DealListItemProps) {
                         {formatCurrency(deal.investmentAmount)}
                     </div>
                     <div className="flex flex-row space-x-2 items-center">
-                        <CircleCheckBig className="w-5 h-5 text-green-600" />
-                        <p className="text-sm font-semibold text-green-600">
+                        <CircleCheckBig className="w-5 h-5 text-[#4E8C37]" />
+                        <p className="text-sm font-semibold text-[#4E8C37]">
                             {getStatusLabel(deal.status, deal.currentMilestone || 0)}
                         </p>
                     </div>
@@ -115,45 +90,89 @@ export default function DealListItem({ deal, onClick }: DealListItemProps) {
             </div>
 
             {/* Desktop Layout */}
-            <div className="hidden md:grid grid-cols-12 gap-6 items-center p-6">
-                {/* Deal Name - 3 columns */}
-                <div className="col-span-3">
-                    <h3 className="font-bold text-lg text-gray-900 group-hover:text-[#4E8C37] transition-colors line-clamp-1">
-                        {deal.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1 line-clamp-1">
-                        {deal.origin} → {deal.destination}
-                    </p>
+            <div className="hidden md:block bg-white border border-[#E2E8F0] rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-[20px] flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                        <h3 className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>
+                            {deal.name}
+                        </h3>
+                        <StatusBadge status={getStatusLabel(deal.status, deal.currentMilestone || 0)} />
+                        {deal.origin && <Badge variant="commodity">{deal.origin}</Badge>}
+                        {deal.risk && <RiskBadge risk={deal.risk as 'low' | 'medium' | 'high'} />}
+                    </div>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onClick();
+                            }}
+                            className="bg-[#FAFAFA] border border-[#CAD5E2] text-[#314158] hover:bg-gray-50 rounded-md h-9"
+                            style={{ letterSpacing: '-0.3125px' }}
+                        >
+                            View Details
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onClick();
+                            }}
+                            className="bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-9"
+                            style={{ letterSpacing: '-0.3125px' }}
+                        >
+                            Manage
+                        </Button>
+                    </div>
                 </div>
 
-                {/* APY - 2 columns */}
-                <div className="col-span-2 text-center">
-                    <div className="text-sm text-gray-600 mb-1">APY</div>
-                    <div className="text-2xl font-bold text-[#4E8C37]">{apy.toFixed(2)}%</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 my-[16px]">
+                    <MetricDisplay
+                        label="Yield"
+                        value={`${apy.toFixed(1)}%`}
+                        icon={TrendingUp}
+                        iconColor="#4E8C37"
+                        iconBackgroundColor="#ECFDF5"
+                        valueSize="sm"
+                    />
+                    <MetricDisplay
+                        label="Amount Invested"
+                        value={formatCurrency(deal.investmentAmount)}
+                        icon={DollarSign}
+                        iconColor="#BDD156"
+                        iconBackgroundColor="#F7FEE7"
+                        valueSize="sm"
+                    />
+                    <MetricDisplay
+                        label="Collateral"
+                        value="Warehouse receipts"
+                        icon={Circle}
+                        iconColor="#EEBA32"
+                        iconBackgroundColor="#FFFBEB"
+                        valueSize="sm"
+                    />
+                    <MetricDisplay
+                        label="Maturity"
+                        value="Mar 15, 2026"
+                        icon={Calendar}
+                        iconColor="#4E8C37"
+                        iconBackgroundColor="#ECFDF5"
+                        valueSize="sm"
+                    />
                 </div>
 
-                {/* Total Supplied - 2 columns */}
-                <div className="col-span-2 text-center">
-                    <div className="text-sm text-gray-600 mb-1">Total Supplied</div>
-                    <div className="text-lg font-semibold text-gray-900">{formatCurrency(deal.investmentAmount)}</div>
-                </div>
-
-                {/* Liquidity Pool Size - 2 columns */}
-                <div className="col-span-2 text-center">
-                    <div className="text-sm text-gray-600 mb-1">Pool Size</div>
-                    <div className="text-lg font-semibold text-gray-900">{formatCurrency(liquidityPoolSize)}</div>
-                </div>
-
-                {/* Risk - 2 columns */}
-                <div className="col-span-2 text-center">
-                    <div className="text-sm text-gray-600 mb-2">Risk</div>
-                    {getRiskBadge(deal.risk)}
-                </div>
-
-                {/* Arrow - 1 column */}
-                <div className="col-span-1 flex justify-end">
-                    <ArrowRight className="w-6 h-6 text-gray-400 group-hover:text-[#4E8C37] group-hover:translate-x-1 transition-all" />
-                </div>
+                {/* Progress Bar for In Progress deals */}
+                {getStatusLabel(deal.status, deal.currentMilestone || 0) === 'In Progress' && (
+                    <div className="pt-[17px] border-t border-[#F1F5F9]">
+                        <ProgressBar
+                            progress={65}
+                            label="Deal Progress: Stored at Destination"
+                            showPercentage
+                            showIndicator
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );

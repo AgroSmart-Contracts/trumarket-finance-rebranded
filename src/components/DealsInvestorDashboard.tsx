@@ -1,29 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DealCard from '@/components/DealCard';
 import DealListItem from '@/components/DealListItem';
-import DealFilters, { FilterOptions } from '@/components/DealFilters';
 import { useICPShipments } from '@/hooks/useICPShipments';
 import { DealDetails } from '@/types';
 import { calculatePortfolioMetrics, calculateAPY, calculateRevenue } from '@/lib/financialCalculations';
+import { DollarSign, TrendingUp, Clock, BarChart3, Search, Circle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/lib/formatters';
+import { MetricCard } from '@/components/ui/MetricCard';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { Sparkline } from '@/components/ui/Sparkline';
+import { RiskBadge } from '@/components/ui/RiskBadge';
 
 export default function DealsInvestorDashboard() {
   const router = useRouter();
   const { shipments: deals, loading } = useICPShipments();
 
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'in-progress' | 'completed'>('active');
-  const [filters, setFilters] = useState<FilterOptions>({
-    origins: [],
-    destinations: [],
-    statuses: [],
-    transports: [],
-    minInvestment: null,
-    risks: [],
-    minAPY: null,
-    maxAPY: null,
-  });
 
   const applyFilters = (dealsToFilter: DealDetails[]): DealDetails[] => {
     return dealsToFilter.filter((deal) => {
@@ -36,42 +32,6 @@ export default function DealsInvestorDashboard() {
           return false;
         }
         if (statusFilter === 'completed' && deal.status !== 'finished') {
-          return false;
-        }
-      }
-
-      // Origin filter
-      if (filters.origins.length > 0 && !filters.origins.includes(deal.origin)) {
-        return false;
-      }
-
-      // Destination filter
-      if (filters.destinations.length > 0 && !filters.destinations.includes(deal.destination)) {
-        return false;
-      }
-
-      // Transport filter
-      if (filters.transports.length > 0 && !filters.transports.includes(deal.transport)) {
-        return false;
-      }
-
-      // Minimum investment filter
-      if (filters.minInvestment !== null && deal.investmentAmount < filters.minInvestment) {
-        return false;
-      }
-
-      // Risk filter
-      if (filters.risks.length > 0 && (!deal.risk || !filters.risks.includes(deal.risk))) {
-        return false;
-      }
-
-      // APY filter
-      if (filters.minAPY !== null || filters.maxAPY !== null) {
-        const dealAPY = calculateAPY(deal);
-        if (filters.minAPY !== null && dealAPY < filters.minAPY) {
-          return false;
-        }
-        if (filters.maxAPY !== null && dealAPY > filters.maxAPY) {
           return false;
         }
       }
@@ -92,14 +52,6 @@ export default function DealsInvestorDashboard() {
   const inProgressCount = deals.filter(d => d.status === 'confirmed' && d.currentMilestone > 0).length;
   const completedCount = deals.filter(d => d.status === 'finished').length;
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
   if (loading) {
     return (
@@ -109,79 +61,219 @@ export default function DealsInvestorDashboard() {
     );
   }
 
+  // Calculate metrics for display
+  const dealValueGenerated = totalInvested + totalRevenue;
+  const yieldGenerated = averageAPY;
+  const aum = totalInvested;
+  const activeDealsCount = activeCount;
+
   return (
-    <div className="min-h-screen bg-[#F2F2F2]">
-      <main className="container mx-auto py-8 px-4 sm:px-6">
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-[#4EA4D9]">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">AUM</h3>
-            <p className="text-2xl font-bold text-[#4EA4D9]">$1.2M USD</p>
+    <div className="min-h-screen bg-[#FAFAFA]">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8 pb-0 flex flex-col gap-[24px]">
+        {/* Metrics Summary Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <MetricCard
+            label="Deal Value Generated"
+            value={formatCurrency(dealValueGenerated)}
+            icon={DollarSign}
+            iconColor="#4E8C37"
+            iconBackgroundColor="#ECFDF5"
+            change={{ value: '+12.5% p.a.', isPositive: true }}
+            sparkline={<Sparkline color="#4E8C37" />}
+            width="100%"
+          />
+          <MetricCard
+            label="Yield Generated"
+            value={`${yieldGenerated.toFixed(2)}%`}
+            icon={TrendingUp}
+            iconColor="#BDD156"
+            iconBackgroundColor="#F7FEE7"
+            change={{ value: '+0.8% p.a.', isPositive: true }}
+            sparkline={<Sparkline color="#BDD156" />}
+            width="100%"
+          />
+          <MetricCard
+            label="AUM"
+            value={formatCurrency(aum)}
+            icon={Clock}
+            iconColor="#EEBA32"
+            iconBackgroundColor="#FFFBEB"
+            change={{ value: '+18.2% p.a.', isPositive: true }}
+            sparkline={<Sparkline color="#EEBA32" />}
+            width="100%"
+          />
+          <MetricCard
+            label="Active Deals"
+            value={activeDealsCount.toString()}
+            icon={BarChart3}
+            iconColor="#4E8C37"
+            iconBackgroundColor="#ECFDF5"
+            change={{ value: '+5 p.a.', isPositive: true }}
+            sparkline={<Sparkline color="#4E8C37" />}
+            width="100%"
+          />
+        </div>
+
+        {/* Recommended Deals Section */}
+        {filteredDeals.filter(d => d.status !== 'finished').length > 0 && (
+          <div className="mb-[24px]">
+            <SectionHeader className="mb-4">Recommended Deals</SectionHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDeals
+                .filter(d => d.status !== 'finished')
+                .slice(0, 3)
+                .map((deal) => (
+                  <div
+                    key={deal.id}
+                    className="bg-white border border-[#E2E8F0] rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] hover:shadow-md transition-all cursor-pointer w-full"
+                    onClick={() => router.push(`/shipments/${deal.id}`)}
+                  >
+                    <div className="p-6 flex flex-col gap-4">
+                      {/* Category Tags */}
+                      <div className="flex items-center gap-2 sm:gap-3 justify-between">
+                        <span className="px-[10px] py-0.5 rounded-full text-base font-normal text-[#314158]" style={{ background: '#F1F5F9', letterSpacing: '-0.3125px' }}>
+                          {deal.origin || 'Grain'}
+                        </span>
+                        <span className="px-[10px] py-0.5 rounded-full text-base font-normal text-white bg-[#4E8C37]" style={{ letterSpacing: '-0.3125px' }}>
+                          Featured
+                        </span>
+                      </div>
+
+                      {/* Deal Name */}
+                      <h3 className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>{deal.name}</h3>
+
+                      {/* Key Details */}
+                      <div className="flex flex-col gap-3">
+                        <div className="flex justify-between items-center" style={{ height: '24px' }}>
+                          <div className="flex items-center gap-3">
+                            <TrendingUp className="w-4 h-4 text-[#62748E]" />
+                            <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Expected Yield</span>
+                          </div>
+                          <span className="text-base leading-6 font-normal text-[#4E8C37]" style={{ letterSpacing: '-0.3125px' }}>{calculateAPY(deal).toFixed(1)}%</span>
+                        </div>
+                        <div className="flex justify-between items-center" style={{ height: '24px' }}>
+                          <div className="flex items-center gap-3">
+                            <Clock className="w-4 h-4 text-[#62748E]" />
+                            <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Duration</span>
+                          </div>
+                          <span className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>180 days</span>
+                        </div>
+                        <div className="flex justify-between items-center" style={{ height: '24px' }}>
+                          <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Maturity</span>
+                          <span className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>Jun 2026</span>
+                        </div>
+                        <div className="flex justify-between items-center" style={{ height: '24px' }}>
+                          <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>
+                            Risk Level: {deal.risk === 'low' ? 'Low' : deal.risk === 'medium' ? 'Medium' : 'High'}
+                          </span>
+                          {deal.risk && <RiskBadge risk={deal.risk as 'low' | 'medium' | 'high'} />}
+                        </div>
+
+                        {/* Collateral Information */}
+                        <div className="pt-[13px] border-t border-[#F1F5F9] flex flex-col gap-0.5">
+                          <div className="flex items-center gap-3 mb-0.5">
+                            <Circle className="w-4 h-4 text-[#90A1B9]" />
+                            <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Collateral</span>
+                          </div>
+                          <p className="text-sm leading-5 font-normal text-[#0F172B] ml-7" style={{ letterSpacing: '-0.150391px' }}>
+                            Physical inventory + Insurance
+                          </p>
+                          <p className="text-xs leading-4 font-normal text-[#62748E] ml-7">
+                            Ratio: 125%
+                          </p>
+                        </div>
+
+                        {/* Deal Size */}
+                        <div className="flex justify-between items-center" style={{ height: '32px' }}>
+                          <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Deal Size</span>
+                          <span className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>{formatCurrency(deal.investmentAmount)}</span>
+                        </div>
+                      </div>
+
+                      {/* Invest Now Button */}
+                      <Button
+                        className="w-full bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-10 mt-auto"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/shipments/${deal.id}`);
+                        }}
+                      >
+                        <span className="text-base leading-6 font-normal" style={{ letterSpacing: '-0.3125px' }}>Invest Now</span>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-[#4E8C37]">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">Yield Generated (APY)</h3>
-            <p className="text-2xl font-bold text-[#4E8C37]">$306K USD</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-[#F2A007]">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">Deal Value Generated</h3>
-            <p className="text-2xl font-bold text-[#F2A007]">$10.2M USD</p>
+        )}
+
+        {/* Search Bar */}
+        <div className="bg-white rounded-lg border border-[#E2E8F0] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-4 mb-6 w-full">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#90A1B9]" />
+            <input
+              type="text"
+              placeholder="Search deals..."
+              className="w-full pl-10 pr-4 py-2 bg-[#FAFAFA] border-none rounded-md text-base font-normal text-[#0F172A] focus:outline-none"
+              style={{ height: '40px', letterSpacing: '-0.3125px' }}
+            />
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex gap-4 flex-wrap">
+        <div className="bg-white rounded-md border border-[#E2E8F0] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-1.5 mb-6 w-full overflow-x-auto">
+          <div className="flex gap-1 sm:gap-0 sm:justify-between min-w-max sm:min-w-0">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`px-6 py-2 rounded-lg font-medium transition-all ${statusFilter === 'all'
-                ? 'bg-[#4E8C37] text-white shadow-[0_4px_14px_0_rgba(60,166,56,0.25)]'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-2 sm:px-3 py-2 sm:py-2.5 rounded text-xs sm:text-sm md:text-base font-normal transition-all whitespace-nowrap flex-shrink-0 ${statusFilter === 'all'
+                ? 'bg-[#F1F5F9] text-[#0F172B] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]'
+                : 'text-[#64748B] hover:text-[#0F172B]'
                 }`}
+              style={{ letterSpacing: '-0.3125px', minHeight: '36px', height: 'auto' }}
             >
-              All ({deals.length})
+              <span className="hidden sm:inline">All Deals</span>
+              <span className="sm:hidden">All</span>
+              <span className="px-1.5 sm:px-2.5 py-0.5 bg-[#F1F5F9] rounded-full text-xs sm:text-sm md:text-base font-normal text-[#314158] ml-1 sm:ml-2" style={{ letterSpacing: '-0.3125px' }}>{deals.length}</span>
             </button>
             <button
               onClick={() => setStatusFilter('active')}
-              className={`px-6 py-2 rounded-lg font-medium transition-all ${statusFilter === 'active'
-                ? 'bg-[#4E8C37] text-white shadow-[0_4px_14px_0_rgba(60,166,56,0.25)]'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-2 sm:px-3 py-2 sm:py-2.5 rounded text-xs sm:text-sm md:text-base font-normal transition-all whitespace-nowrap flex-shrink-0 ${statusFilter === 'active'
+                ? 'bg-[#F1F5F9] text-[#0F172B] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]'
+                : 'text-[#64748B] hover:text-[#0F172B]'
                 }`}
+              style={{ letterSpacing: '-0.3125px', minHeight: '36px', height: 'auto' }}
             >
-              Active ({activeCount})
+              Active <span className="px-1.5 sm:px-2.5 py-0.5 bg-[#F1F5F9] rounded-full text-xs sm:text-sm md:text-base font-normal text-[#314158] ml-1 sm:ml-2" style={{ letterSpacing: '-0.3125px' }}>{activeCount}</span>
             </button>
             <button
               onClick={() => setStatusFilter('in-progress')}
-              className={`px-6 py-2 rounded-lg font-medium transition-all ${statusFilter === 'in-progress'
-                ? 'bg-[#4E8C37] text-white shadow-[0_4px_14px_0_rgba(60,166,56,0.25)]'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-2 sm:px-3 py-2 sm:py-2.5 rounded text-xs sm:text-sm md:text-base font-normal transition-all whitespace-nowrap flex-shrink-0 ${statusFilter === 'in-progress'
+                ? 'bg-[#F1F5F9] text-[#0F172B] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]'
+                : 'text-[#64748B] hover:text-[#0F172B]'
                 }`}
+              style={{ letterSpacing: '-0.3125px', minHeight: '36px', height: 'auto' }}
             >
-              In Progress ({inProgressCount})
+              <span className="hidden sm:inline">In Progress</span>
+              <span className="sm:hidden">Progress</span>
+              <span className="px-1.5 sm:px-2.5 py-0.5 bg-[#F1F5F9] rounded-full text-xs sm:text-sm md:text-base font-normal text-[#314158] ml-1 sm:ml-2" style={{ letterSpacing: '-0.3125px' }}>{inProgressCount}</span>
             </button>
             <button
               onClick={() => setStatusFilter('completed')}
-              className={`px-6 py-2 rounded-lg font-medium transition-all ${statusFilter === 'completed'
-                ? 'bg-[#4E8C37] text-white shadow-[0_4px_14px_0_rgba(60,166,56,0.25)]'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-2 sm:px-3 py-2 sm:py-2.5 rounded text-xs sm:text-sm md:text-base font-normal transition-all whitespace-nowrap flex-shrink-0 ${statusFilter === 'completed'
+                ? 'bg-[#F1F5F9] text-[#0F172B] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]'
+                : 'text-[#64748B] hover:text-[#0F172B]'
                 }`}
+              style={{ letterSpacing: '-0.3125px', minHeight: '36px', height: 'auto' }}
             >
-              Completed ({completedCount})
+              Completed <span className="px-1.5 sm:px-2.5 py-0.5 bg-[#F1F5F9] rounded-full text-xs sm:text-sm md:text-base font-normal text-[#314158] ml-1 sm:ml-2" style={{ letterSpacing: '-0.3125px' }}>{completedCount}</span>
             </button>
           </div>
         </div>
 
-        {/* Advanced Filters */}
-        <DealFilters onFilterChange={setFilters} />
-
-        {/* Open Deals Section */}
+        {/* Deals Section */}
         {statusFilter !== 'completed' && (
           <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              {statusFilter === 'all' ? 'Open Deals' : statusFilter === 'active' ? 'Active Deals' : 'In Progress Deals'}
-            </h2>
-            <p className="text-gray-600 mb-6">
-              {filteredDeals.filter(d => d.status !== 'finished').length} open deal{filteredDeals.filter(d => d.status !== 'finished').length !== 1 ? 's' : ''}
-            </p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Deals</h2>
 
             {/* Show list view if 3+ deals, otherwise card view */}
             {filteredDeals.filter(d => d.status !== 'finished').length >= 3 ? (
@@ -231,37 +323,73 @@ export default function DealsInvestorDashboard() {
                   <div
                     key={deal.id}
                     onClick={() => router.push(`/shipments/${deal.id}`)}
-                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-[#4E8C37]"
+                    className="bg-white border border-gray-200 rounded-lg p-[25px] hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-[#4E8C37]"
                   >
-                    <div className="grid grid-cols-12 gap-6 items-center">
+                    {/* Mobile Layout */}
+                    <div className="block md:hidden space-y-4">
                       {/* Deal Name */}
-                      <div className="col-span-4">
-                        <h3 className="font-bold text-lg text-gray-900">{deal.name}</h3>
+                      <div>
+                        <h3 className="font-bold text-base sm:text-lg text-gray-900">{deal.name}</h3>
                         <p className="text-sm text-gray-500 mt-1">
                           {deal.origin} → {deal.destination}
                         </p>
                       </div>
 
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-xs sm:text-sm text-gray-600 mb-1">Total Loan Amount</div>
+                          <div className="text-base sm:text-lg font-semibold text-gray-900">
+                            {formatCurrency(deal.investmentAmount)}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs sm:text-sm text-gray-600 mb-1">Interest Paid</div>
+                          <div className="text-base sm:text-lg font-semibold text-[#4E8C37]">
+                            {formatCurrency(interestPaid)}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Status */}
+                      <div>
+                        <div className="text-xs sm:text-sm text-gray-600 mb-2">Status</div>
+                        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-[#4E8C3720] text-[#3A6A28] border border-[#4E8C37]">
+                          Fully Repaid
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Desktop Layout */}
+                    <div className="hidden md:grid md:grid-cols-12 gap-4 lg:gap-6 items-center">
+                      {/* Deal Name */}
+                      <div className="col-span-12 md:col-span-5 lg:col-span-4">
+                        <h3 className="font-bold text-base md:text-lg text-gray-900">{deal.name}</h3>
+                        <p className="text-xs md:text-sm text-gray-500 mt-1">
+                          {deal.origin} → {deal.destination}
+                        </p>
+                      </div>
+
                       {/* Total Loan Amount */}
-                      <div className="col-span-3 text-center">
-                        <div className="text-sm text-gray-600 mb-1">Total Loan Amount</div>
-                        <div className="text-lg font-semibold text-gray-900">
+                      <div className="col-span-6 md:col-span-3 lg:col-span-3 text-center">
+                        <div className="text-xs md:text-sm text-gray-600 mb-1">Total Loan Amount</div>
+                        <div className="text-base md:text-lg font-semibold text-gray-900">
                           {formatCurrency(deal.investmentAmount)}
                         </div>
                       </div>
 
                       {/* Interest Paid */}
-                      <div className="col-span-3 text-center">
-                        <div className="text-sm text-gray-600 mb-1">Interest Paid</div>
-                        <div className="text-lg font-semibold text-[#4E8C37]">
+                      <div className="col-span-6 md:col-span-2 lg:col-span-3 text-center">
+                        <div className="text-xs md:text-sm text-gray-600 mb-1">Interest Paid</div>
+                        <div className="text-base md:text-lg font-semibold text-[#4E8C37]">
                           {formatCurrency(interestPaid)}
                         </div>
                       </div>
 
                       {/* Status */}
-                      <div className="col-span-2 text-center">
-                        <div className="text-sm text-gray-600 mb-2">Status</div>
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#4E8C3720] text-[#3A6A28] border border-[#4E8C37]">
+                      <div className="col-span-12 md:col-span-2 lg:col-span-2 text-center md:text-left">
+                        <div className="text-xs md:text-sm text-gray-600 mb-2">Status</div>
+                        <span className="inline-block px-2 md:px-3 py-1 rounded-full text-xs font-medium bg-[#4E8C3720] text-[#3A6A28] border border-[#4E8C37]">
                           Fully Repaid
                         </span>
                       </div>
@@ -282,4 +410,3 @@ export default function DealsInvestorDashboard() {
     </div>
   );
 }
-

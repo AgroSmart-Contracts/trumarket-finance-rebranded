@@ -1,314 +1,213 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { DealDetails } from '@/types';
-import { milestones } from '@/lib/static';
-import RecentActivityList from './RecentActivity';
-import FinanceSection from './FinanceSection';
 import { useICPShipment } from '@/hooks/useICPShipments';
-import { formatDate } from '@/lib/dateUtils';
+import { calculateAPY } from '@/lib/financialCalculations';
+import { parseNumericString, formatCurrency } from '@/lib/formatters';
 import {
-    DollarSign,
-    TrendingUp,
-    Calendar,
-    Timer,
-    Flag,
-    Play
-} from 'lucide-react';
+    HEADER_HEIGHT,
+    HEADER_PADDING_Y,
+    HEADER_CONTENT_HEIGHT,
+    TYPOGRAPHY,
+    SHADOWS,
+    INVESTMENT,
+    COPY_TIMEOUT,
+} from '@/lib/constants';
+import { Button } from '@/components/ui/button';
+import InvestmentReview from './InvestmentReview';
+import InvestmentSuccess from './InvestmentSuccess';
+import { Footer } from '@/components/Scaffold';
+import {
+    DealOverviewCard,
+    FinancialInformationCard,
+    InvestmentAmountCard,
+    InvestmentSummaryCard,
+    InvestmentDetailsCard,
+    SmartContractCard,
+} from './deals';
 
-interface MilestoneItemProps {
-    milestone: typeof milestones[0];
-    index: number;
-    isCompleted: boolean;
-    isActive: boolean;
-    docCount?: number;
-    onClick: () => void;
-    location?: string;
-    date?: string;
+interface InvestmentCalculations {
+    investmentValue: number;
+    estimatedReturns: number;
+    managementFee: number;
+    netReturns: number;
+    totalAtMaturity: number;
 }
 
-const MilestoneItem: React.FC<MilestoneItemProps> = ({
-    milestone,
-    isCompleted,
-    isActive,
-    docCount,
-    onClick,
-    location,
-    date
-}) => {
-    return (
-        <div
-            className={`flex items-start justify-between p-3 sm:p-4 rounded-lg border-2 transition-all duration-300 cursor-pointer w-full max-w-full box-border min-w-0 overflow-hidden ${isCompleted
-                ? 'bg-[#dcfce7] border-[#4E8C37] hover:bg-[#bbf7d0]'
-                : 'bg-white border-gray-200 opacity-60'
-                }`}
-            onClick={onClick}
-        >
-            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0 mr-2 sm:mr-3 ${isCompleted
-                ? 'bg-[#4E8C37] text-white'
-                : 'bg-gray-400 text-gray-50'
-                }`}>
-                {isCompleted ? '✓' : '⏳'}
-            </div>
-            <div className="flex-1 min-w-0 overflow-hidden">
-                <div className="font-semibold text-xs sm:text-sm text-[#2D3E57] mb-1 overflow-hidden text-ellipsis whitespace-nowrap">
-                    {milestone.label}
-                </div>
-                {location && (
-                    <div className="text-[10px] sm:text-xs text-gray-500 mb-0.5 overflow-hidden text-ellipsis whitespace-nowrap">
-                        {location}
-                    </div>
-                )}
-                {date && (
-                    <div className="text-[10px] sm:text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
-                        {date}
-                    </div>
-                )}
-            </div>
-            {docCount !== undefined && docCount > 0 && (
-                <div className="bg-[#4E8C37] text-white px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 whitespace-nowrap ml-2">
-                    {docCount} Document{docCount !== 1 ? 's' : ''}
-                </div>
-            )}
-        </div>
-    );
+/**
+ * Calculates investment returns based on amount and APY
+ */
+const calculateInvestmentReturns = (
+    investmentAmount: string,
+    apy: number
+): InvestmentCalculations => {
+    const investmentValue = parseNumericString(investmentAmount);
+    const daysRatio = INVESTMENT.DEAL_DURATION_DAYS / INVESTMENT.DAYS_PER_YEAR;
+    const estimatedReturns = investmentValue * (apy / 100) * daysRatio;
+    const managementFee = investmentValue * INVESTMENT.MANAGEMENT_FEE_RATE * daysRatio;
+    const netReturns = estimatedReturns - managementFee;
+    const totalAtMaturity = investmentValue + netReturns;
+
+    return {
+        investmentValue,
+        estimatedReturns,
+        managementFee,
+        netReturns,
+        totalAtMaturity,
+    };
 };
 
-const ShipmentDetailsPage: React.FC<{ shipment: DealDetails }> = ({
-    shipment,
-}) => {
-    const [activeStep, setActiveStep] = useState(shipment.currentMilestone);
+interface ShipmentDetailsPageProps {
+    shipment: DealDetails;
+}
 
-    const handleStepClick = (step: number) => {
-        if (step <= shipment.currentMilestone) {
-            setActiveStep(step);
+const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipment }) => {
+    const router = useRouter();
+    const [investmentAmount, setInvestmentAmount] = useState<string>('0');
+    const [copied, setCopied] = useState(false);
+    const [showReview, setShowReview] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const apy = calculateAPY(shipment);
+
+    const investmentCalculations = calculateInvestmentReturns(investmentAmount, apy);
+
+    // Calculate if invest button should be enabled
+    const investmentValue = parseNumericString(investmentAmount);
+    const isInvestButtonEnabled = investmentValue >= INVESTMENT.MIN_INVESTMENT && investmentValue <= INVESTMENT.MAX_INVESTMENT;
+
+    const handleCopy = useCallback(() => {
+        if (shipment.vaultAddress) {
+            navigator.clipboard.writeText(shipment.vaultAddress);
+            setCopied(true);
+            setTimeout(() => setCopied(false), COPY_TIMEOUT);
         }
+    }, [shipment.vaultAddress]);
+
+    const handleQuickAmount = useCallback((amount: number) => {
+        setInvestmentAmount(amount.toString());
+    }, []);
+
+    const handleInvest = useCallback(() => {
+        const investmentValue = parseNumericString(investmentAmount);
+        if (investmentValue >= INVESTMENT.MIN_INVESTMENT && investmentValue <= INVESTMENT.MAX_INVESTMENT) {
+            setShowReview(true);
+        }
+    }, [investmentAmount]);
+
+    const handleGoBack = useCallback(() => {
+        setShowReview(false);
+    }, []);
+
+    const handleCompleteInvestment = useCallback(() => {
+        // TODO: Implement actual investment completion logic (blockchain transaction, API call, etc.)
+        console.log('Completing investment', investmentCalculations);
+        // Show success screen after investment completion
+        setShowSuccess(true);
+    }, [investmentCalculations]);
+
+    // Show success screen if investment is complete
+    if (showSuccess) {
+        return (
+            <InvestmentSuccess
+                shipment={shipment}
+                investmentAmount={investmentAmount}
+            />
+        );
+    }
+
+    // Show review screen if user clicked invest
+    if (showReview) {
+        return (
+            <InvestmentReview
+                shipment={shipment}
+                investmentAmount={investmentAmount}
+                onGoBack={handleGoBack}
+                onComplete={handleCompleteInvestment}
+            />
+        );
+    }
+
+    const headerStyle = {
+        padding: `${HEADER_PADDING_Y}px 16px`,
+        height: `${HEADER_HEIGHT}px`,
     };
-
-    const getMilestoneStatus = (index: number) => {
-        return index <= shipment.currentMilestone;
-    };
-
-    const activeMilestone = milestones[activeStep];
-
-    // Calculate deal metrics
-    const dealValue = shipment.offerUnitPrice * shipment.quantity;
-    const progress = shipment.currentMilestone > 0 ? Math.round((shipment.currentMilestone / milestones.length) * 100) : 0;
-    const daysSinceStart = shipment.shippingStartDate ? Math.floor((Date.now() - new Date(shipment.shippingStartDate).getTime()) / (1000 * 60 * 60 * 24)) : 0;
-    const daysUntilEnd = shipment.expectedShippingEndDate ? Math.ceil((new Date(shipment.expectedShippingEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 bg-gray-50">
-            {/* Deal Progress Overview Section */}
-            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-300">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4 sm:mb-6">
-                    <h2 className="text-xl sm:text-2xl font-bold text-[#2D3E57]">Deal Progress Overview</h2>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                        <span className="text-xs sm:text-sm text-gray-500">Last Updated: 2 hours ago</span>
-                        <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-[#4E8C3715] rounded-lg border border-[#4E8C37]">
-                            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-[#4E8C37] rounded-full flex items-center justify-center">
-                                <Play className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white fill-current" />
-                            </div>
-                            <span className="text-[#3A6A28] font-semibold text-xs sm:text-sm">Active Deal</span>
-                        </div>
-                    </div>
+        <div className="w-full bg-[#FAFAFA] min-h-screen flex flex-col">
+            {/* Top Navigation Bar */}
+            <div
+                className="bg-white border-b border-[#E2E8F0]"
+                style={{ ...headerStyle, boxShadow: SHADOWS.card }}
+            >
+                <div
+                    className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-0 px-4 sm:px-8"
+                    style={{ minHeight: `${HEADER_CONTENT_HEIGHT}px` }}
+                >
+                    <Button
+                        variant="ghost"
+                        onClick={() => router.push('/')}
+                        className="flex items-center gap-2 text-[#314158] hover:bg-[#FAFAFA] rounded-md h-10 w-full sm:w-auto justify-center sm:justify-start"
+                        style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span className="hidden sm:inline">Back to Dashboard</span>
+                        <span className="sm:hidden">Back</span>
+                    </Button>
+                    <Button
+                        onClick={handleInvest}
+                        className="bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-10 px-4 sm:px-8 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
+                        disabled={!isInvestButtonEnabled}
+                        title={!isInvestButtonEnabled ? `Minimum investment is ${formatCurrency(INVESTMENT.MIN_INVESTMENT)}` : undefined}
+                    >
+                        Invest Now
+                    </Button>
                 </div>
+            </div>
 
-                {/* Key Metrics Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
-                    <div className="bg-[#4EA4D915] rounded-xl p-2 sm:p-4 border border-[#4EA4D9]">
-                        <div className="flex justify-between items-start mb-1 sm:mb-2">
-                            <span className="text-xs sm:text-sm font-medium text-[#4EA4D9]">Deal Value</span>
-                            <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-[#4EA4D9]" />
-                        </div>
-                        <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#2D3E57]">
-                            ${(dealValue / 1000).toFixed(0)}K
-                        </div>
-                    </div>
-                    <div className="bg-[#4E8C3715] rounded-xl p-2 sm:p-4 border border-[#4E8C37]">
-                        <div className="flex justify-between items-start mb-1 sm:mb-2">
-                            <span className="text-xs sm:text-sm font-medium text-[#4E8C37]">Progress</span>
-                            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#4E8C37]" />
-                        </div>
-                        <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#2D3E57]">{progress}%</div>
-                    </div>
-                    <div className="bg-[#F2A00715] rounded-xl p-2 sm:p-4 border border-[#F2A007]">
-                        <div className="flex justify-between items-start mb-1 sm:mb-2">
-                            <span className="text-xs sm:text-sm font-medium text-[#F2A007]">Days Elapsed</span>
-                            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-[#F2A007]" />
-                        </div>
-                        <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#2D3E57]">{daysSinceStart}</div>
-                    </div>
-                    <div className="bg-[#4EA4D915] rounded-xl p-2 sm:p-4 border border-[#4EA4D9]">
-                        <div className="flex justify-between items-start mb-1 sm:mb-2">
-                            <span className="text-xs sm:text-sm font-medium text-[#4EA4D9]">ETA</span>
-                            <Timer className="w-4 h-4 sm:w-5 sm:h-5 text-[#4EA4D9]" />
-                        </div>
-                        <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#2D3E57]">{daysUntilEnd} days</div>
-                    </div>
-                </div>
+            {/* Main Content */}
+            <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex flex-col gap-4 sm:gap-6 w-full">
+                {/* Deal Overview Card */}
+                <DealOverviewCard shipment={shipment} />
 
-                {/* Deal Information Card */}
-                <div className="bg-gradient-to-r from-[#4EA4D910] to-[#4E8C3710] rounded-xl p-4 sm:p-6 border border-gray-300 cursor-pointer hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start">
-                        <div className="flex-1 w-full">
-                            <h3 className="text-lg sm:text-xl font-bold text-[#2D3E57] mb-3">{shipment.name}</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Flag className="w-3 h-3 sm:w-4 sm:h-4 text-red-600 flex-shrink-0" />
-                                        <span className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{shipment.origin}</span>
-                                    </div>
-                                    <p className="text-xs sm:text-sm text-gray-600 break-words">{shipment.portOfOrigin} • {formatDate(shipment.shippingStartDate)} ETD</p>
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Flag className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 flex-shrink-0" />
-                                        <span className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{shipment.destination}</span>
-                                    </div>
-                                    <p className="text-xs sm:text-sm text-gray-600">ETA {formatDate(shipment.expectedShippingEndDate)}</p>
-                                </div>
-                            </div>
-                            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
-                                    <strong className="text-gray-900 flex-shrink-0">Supplier:</strong>
-                                    <span className="break-all">rony@villaventurapro.com</span>
-                                </div>
-                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
-                                    <strong className="text-gray-900 flex-shrink-0">Quality:</strong>
-                                    <span className="break-words">{shipment.quality}</span>
-                                </div>
-                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
-                                    <strong className="text-gray-900 flex-shrink-0">Value:</strong>
-                                    <span>${dealValue.toFixed(2)}</span>
-                                </div>
-                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
-                                    <strong className="text-gray-900 flex-shrink-0">Offer Unit Price:</strong>
-                                    <span>${shipment.offerUnitPrice}</span>
-                                </div>
-                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
-                                    <strong className="text-gray-900 flex-shrink-0">Quantity:</strong>
-                                    <span>{shipment.quantity.toLocaleString()}</span>
-                                </div>
-                                <div className="flex items-start sm:items-center gap-2 text-gray-600">
-                                    <strong className="text-gray-900 flex-shrink-0">Transport:</strong>
-                                    <span className="break-words">{shipment.transport}</span>
-                                </div>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-2 break-all">Identifier: #{shipment.id.slice(0, 24)}</p>
-                        </div>
+                {/* Two Column Layout */}
+                <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
+                    {/* Left Column */}
+                    <div className="flex-1 flex flex-col gap-6">
+                        <FinancialInformationCard apy={apy} />
+                        <InvestmentAmountCard
+                            investmentAmount={investmentAmount}
+                            setInvestmentAmount={setInvestmentAmount}
+                            onQuickAmount={handleQuickAmount}
+                        />
+                        <InvestmentSummaryCard
+                            apy={apy}
+                            calculations={investmentCalculations}
+                        />
+                    </div>
+
+                    {/* Right Column */}
+                    <div className="w-full lg:w-[320px] flex flex-col gap-6">
+                        <InvestmentDetailsCard apy={apy} onInvest={handleInvest} />
+                        <SmartContractCard
+                            vaultAddress={shipment.vaultAddress}
+                            copied={copied}
+                            onCopy={handleCopy}
+                        />
                     </div>
                 </div>
             </div>
 
-            {/* Tracking Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-4 lg:gap-8 bg-white rounded-lg shadow-sm">
-                {/* Left Sidebar - Milestone Timeline */}
-                <div className="bg-white lg:border-r lg:border-gray-200 p-4 lg:p-6 w-full max-w-full lg:max-w-[350px] box-border min-w-0 overflow-hidden">
-                    <h3 className="text-base sm:text-xl font-bold text-[#2D3E57] mb-4 sm:mb-6">Milestone Timeline</h3>
-
-                    {/* Origin Location */}
-                    <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg mb-4 sm:mb-6 box-border overflow-hidden">
-                        <span className="text-2xl sm:text-3xl flex-shrink-0">📍</span>
-                        <div className="flex-1 overflow-hidden">
-                            <div className="text-xs sm:text-sm font-semibold text-[#2D3E57] overflow-hidden text-ellipsis whitespace-nowrap">
-                                {shipment.origin}
-                            </div>
-                            <div className="text-[10px] sm:text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
-                                {formatDate(shipment.shippingStartDate)}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Milestone List */}
-                    <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-full box-border min-w-0">
-                        {milestones.map((milestone, index) => {
-                            const isCompleted = index <= shipment.currentMilestone;
-                            const isActive = index === activeStep;
-
-                            return (
-                                <MilestoneItem
-                                    key={milestone.label}
-                                    milestone={milestone}
-                                    index={index}
-                                    isCompleted={isCompleted}
-                                    isActive={isActive}
-                                    docCount={shipment.milestones[index]?.docs?.length || 0}
-                                    onClick={() => handleStepClick(index)}
-                                    location={shipment.origin}
-                                    date={index === 0 ? formatDate(shipment.shippingStartDate) : undefined}
-                                />
-                            );
-                        })}
-                    </div>
-
-                    {/* Destination Location */}
-                    <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg mt-4 sm:mt-6 box-border overflow-hidden">
-                        <span className="text-2xl sm:text-3xl flex-shrink-0">📍</span>
-                        <div className="flex-1 overflow-hidden">
-                            <div className="text-xs sm:text-sm font-semibold text-[#2D3E57] overflow-hidden text-ellipsis whitespace-nowrap">
-                                {shipment.destination}
-                            </div>
-                            <div className="text-[10px] sm:text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
-                                ETA: {formatDate(shipment.expectedShippingEndDate)}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right Main Content */}
-                <div className="bg-white p-4 sm:p-6 lg:p-8">
-                    {/* Milestone Header */}
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 sm:mb-8 pb-4 sm:pb-6 border-b-2 border-gray-200">
-                        <div className="flex gap-3 sm:gap-4 items-start">
-                            <div className="text-3xl sm:text-4xl bg-[#dcfce7] w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center flex-shrink-0">
-                                {activeMilestone?.emoji || '🌱'}
-                            </div>
-                            <div>
-                                <h2 className="text-lg sm:text-2xl font-bold text-[#2D3E57] mb-1 sm:mb-2">
-                                    {activeStep === 7 ? 'Shipment Completed' : activeMilestone?.label || 'Milestone'}
-                                </h2>
-                                <div className="text-xs sm:text-sm text-gray-500">
-                                    {shipment.origin} • {formatDate(shipment.shippingStartDate)}
-                                </div>
-                            </div>
-                        </div>
-                        {shipment.currentMilestone >= activeStep && activeStep < 7 && (
-                            <div className="flex gap-4 items-center">
-                                <div className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-100 rounded-md text-xs sm:text-sm font-semibold text-[#2D3E57]">
-                                    Status: In Progress
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-
-                    {/* Finance Section with Deposit */}
-                    {shipment.vaultAddress && (
-                        <div className="mt-6">
-                            <FinanceSection
-                                vaultAddress={shipment.vaultAddress}
-                                requestFundAmount={shipment.investmentAmount}
-                                currentMilestone={shipment.currentMilestone}
-                                nftID={shipment.nftID}
-                                deal={shipment}
-                            />
-                        </div>
-                    )}
-
-                    {/* Recent Activity */}
-                    {shipment.nftID >= 0 && (
-                        <div className="mt-6">
-                            <RecentActivityList id={shipment.nftID} />
-                        </div>
-                    )}
-                </div>
-            </div>
+            {/* Footer */}
+            <Footer />
         </div>
     );
 };
 
+// Main component wrapper
 export default function ShipmentDetails() {
     const [shipmentDetails, setShipmentDetails] = useState<DealDetails | null>(null);
     const params = useParams();

@@ -1,36 +1,42 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { TYPOGRAPHY } from '@/lib/constants';
 
-const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-  {
-    variants: {
-      variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-)
+export type BadgeVariant = 'status' | 'commodity' | 'risk' | 'verified' | 'featured';
 
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
-
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
-  )
+interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+    children: React.ReactNode;
+    variant?: BadgeVariant;
 }
 
-export { Badge, badgeVariants }
+const badgeStyles: Record<BadgeVariant, string> = {
+    status: 'bg-[#F8FAFC] text-[#0F172A]',
+    commodity: 'bg-[#F1F5F9] text-[#314158]',
+    risk: 'bg-[#F8FAFC] text-[#0F172A]',
+    verified: 'bg-[#4E8C37] text-white',
+    featured: 'bg-[#FFFBEB] text-[#EEBA32] border border-[rgba(238,186,50,0.2)]',
+};
 
+/**
+ * Reusable badge component for status, commodity, risk, etc.
+ */
+export const Badge: React.FC<BadgeProps> = ({
+    children,
+    variant = 'status',
+    className,
+    ...props
+}) => {
+    return (
+        <span
+            className={cn(
+                'px-[10px] py-0.5 rounded-full text-base font-normal',
+                badgeStyles[variant],
+                className
+            )}
+            style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
+            {...props}
+        >
+            {children}
+        </span>
+    );
+};

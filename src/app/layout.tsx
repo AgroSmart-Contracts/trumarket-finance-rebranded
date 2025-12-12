@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Trumarket Finance",
-  description: "Blockchain-based trade finance platform",
+  title: "TruMarket",
+  description: "Institutional Deal Dashboard - Blockchain-based trade finance platform",
 };
 
 export default function RootLayout({

@@ -3,8 +3,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DealDetails } from '@/types';
-import { TrendingUp, DollarSign, Droplets, ShieldAlert, MapPin, ArrowRight, CircleCheckBig } from 'lucide-react';
+import { TrendingUp, DollarSign, Droplets, ShieldAlert, ArrowRight, CircleCheckBig } from 'lucide-react';
 import { calculateAPY } from '@/lib/financialCalculations';
+import { formatCurrency } from '@/lib/formatters';
 
 interface DealCardProps {
   deal: DealDetails;
@@ -38,15 +39,6 @@ const getStatusLabel = (status: string, currentMilestone: number) => {
   }
 };
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
-
 const getRiskLabel = (risk?: string) => {
   if (!risk) return 'N/A';
   return risk.charAt(0).toUpperCase() + risk.slice(1);
@@ -68,7 +60,7 @@ export default function DealCard({ deal }: DealCardProps) {
 
   // Color classes for product badges (inspired by home-next)
   const colorClasses = [
-    "bg-green-100 text-green-600",
+    "bg-[#4E8C3720] text-[#4E8C37]",
     "bg-blue-100 text-blue-600",
     "bg-purple-100 text-purple-600"
   ];
@@ -112,8 +104,8 @@ export default function DealCard({ deal }: DealCardProps) {
             {formatCurrency(deal.investmentAmount)}
           </div>
           <div className="flex flex-row space-x-2 items-center">
-            <CircleCheckBig className="w-5 h-5 text-green-600" />
-            <p className="text-sm font-semibold text-green-600">
+            <CircleCheckBig className="w-5 h-5 text-[#4E8C37]" />
+            <p className="text-sm font-semibold text-[#4E8C37]">
               {getStatusLabel(deal.status, deal.currentMilestone)}
             </p>
           </div>
