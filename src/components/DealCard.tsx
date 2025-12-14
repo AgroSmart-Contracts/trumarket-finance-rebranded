@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { DealDetails } from '@/types';
 import { TrendingUp, DollarSign, Droplets, ShieldAlert, ArrowRight, CircleCheckBig } from 'lucide-react';
-import { calculateAPY } from '@/lib/financialCalculations';
+import { calculateAPY, getDealRisk } from '@/lib/financialCalculations';
 import { formatCurrency } from '@/lib/formatters';
 import { getStatusLabel } from '@/lib/dealUtils';
 
@@ -45,6 +45,7 @@ const getRiskColor = (risk?: string) => {
 
 export default function DealCard({ deal }: DealCardProps) {
   const apy = calculateAPY(deal);
+  const risk = getDealRisk(deal);
   const liquidityPoolSize = deal.liquidityPoolSize || deal.investmentAmount;
 
   // Color classes for product badges (inspired by home-next)
@@ -151,8 +152,8 @@ export default function DealCard({ deal }: DealCardProps) {
                 <ShieldAlert className="w-4 h-4 text-gray-500" />
                 <span className="text-sm text-gray-600">Risk</span>
               </div>
-              <span className={`text-sm font-semibold ${getRiskColor(deal.risk)}`}>
-                {getRiskLabel(deal.risk)}
+              <span className={`text-sm font-semibold ${getRiskColor(risk)}`}>
+                {getRiskLabel(risk)}
               </span>
             </div>
           </div>

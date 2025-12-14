@@ -24,11 +24,15 @@ export function calculateRevenue(deal: DealDetails): number {
 
 /**
  * Calculate APY (Annual Percentage Yield) for a deal
- * TEMPORARY: Returns fake constant values for testing
+ * Uses deal.apy if available, otherwise returns default value
  */
 export function calculateAPY(deal: DealDetails): number {
-    // Return flat 15% APY
-    return 15;
+    // Use deal.apy if set by admin, otherwise return default 15%
+    if (deal.apy !== undefined && deal.apy !== null) {
+        return deal.apy;
+    }
+    // Return flat 12% APY as fallback
+    return 12;
 }
 
 /**
@@ -123,5 +127,36 @@ export function calculateInvestmentLimits(dealAmount: number): { min: number; ma
     const max = dealAmount || INVESTMENT.MAX_INVESTMENT;
 
     return { min, max };
+}
+
+/**
+ * Calculate risk level based on APY percentage
+ * Low risk: 0-7%
+ * Medium risk: 8-13%
+ * High risk: >=14%
+ */
+export function calculateRiskFromAPY(deal: DealDetails): 'low' | 'medium' | 'high' {
+    const apy = calculateAPY(deal);
+
+    if (apy >= 0 && apy <= 7) {
+        return 'low';
+    } else if (apy >= 8 && apy <= 13) {
+        return 'medium';
+    } else {
+        return 'high';
+    }
+}
+
+/**
+ * Get risk level for a deal
+ * Uses deal.risk if set, otherwise calculates from APY
+ */
+export function getDealRisk(deal: DealDetails): 'low' | 'medium' | 'high' {
+    // If risk is explicitly set, use it
+    if (deal.risk) {
+        return deal.risk;
+    }
+    // Otherwise calculate from APY
+    return calculateRiskFromAPY(deal);
 }
 

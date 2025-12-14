@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { TrendingUp, Clock, Calendar, Shield } from 'lucide-react';
 import { DealDetails } from '@/types';
-import { calculateAPY } from '@/lib/financialCalculations';
+import { calculateAPY, getDealRisk } from '@/lib/financialCalculations';
 import { formatDate } from '@/lib/formatters';
 import { getStatusLabel, calculateDuration } from '@/lib/dealUtils';
 import { InfoCard, MetricDisplay, RiskBadge, Badge } from '@/components/ui';
@@ -27,7 +27,7 @@ export const DealOverviewCard: React.FC<DealOverviewCardProps> = ({ shipment }) 
             : 0,
         [shipment.shippingStartDate, shipment.expectedShippingEndDate]
     );
-    const risk = shipment.risk || 'low';
+    const risk = useMemo(() => getDealRisk(shipment), [shipment]);
 
     return (
         <InfoCard style={{ padding: '25px 25px 25px', gap: '24px' }}>

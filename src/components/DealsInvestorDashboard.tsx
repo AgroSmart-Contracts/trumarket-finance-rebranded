@@ -6,7 +6,7 @@ import DealCard from '@/components/DealCard';
 import DealListItem from '@/components/DealListItem';
 import { useICPShipments } from '@/hooks/useICPShipments';
 import { DealDetails } from '@/types';
-import { calculatePortfolioMetrics, calculateAPY, calculateRevenue } from '@/lib/financialCalculations';
+import { calculatePortfolioMetrics, calculateAPY, calculateRevenue, getDealRisk } from '@/lib/financialCalculations';
 import { DollarSign, TrendingUp, Clock, BarChart3, Search, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/formatters';
@@ -114,95 +114,98 @@ export default function DealsInvestorDashboard() {
           />
         </div>
 
-        {/* Recommended Deals Section */}
-        {filteredDeals.filter(d => d.status !== 'finished').length > 0 && (
+        {/* Recommended Deals Section - Only show featured deals */}
+        {filteredDeals.filter(d => d.status !== 'finished' && d.isFeatured === true).length > 0 && (
           <div className="mb-[24px]">
-            <SectionHeader className="mb-4">Recommended Deals</SectionHeader>
+            <SectionHeader className="mb-4">Featured Deals</SectionHeader>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredDeals
-                .filter(d => d.status !== 'finished')
+                .filter(d => d.status !== 'finished' && d.isFeatured === true)
                 .slice(0, 3)
-                .map((deal) => (
-                  <div
-                    key={deal.id}
-                    className="bg-white border border-[#E2E8F0] rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] hover:shadow-md transition-all cursor-pointer w-full"
-                    onClick={() => router.push(`/shipments/${deal.id}`)}
-                  >
-                    <div className="p-6 flex flex-col gap-4">
-                      {/* Category Tags */}
-                      <div className="flex items-center gap-2 sm:gap-3 justify-between">
-                        <span className="px-[10px] py-0.5 rounded-full text-base font-normal text-[#314158]" style={{ background: '#F1F5F9', letterSpacing: '-0.3125px' }}>
-                          {deal.origin || 'Grain'}
-                        </span>
-                        <span className="px-[10px] py-0.5 rounded-full text-base font-normal text-white bg-[#4E8C37]" style={{ letterSpacing: '-0.3125px' }}>
-                          Featured
-                        </span>
-                      </div>
-
-                      {/* Deal Name */}
-                      <h3 className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>{deal.name}</h3>
-
-                      {/* Key Details */}
-                      <div className="flex flex-col gap-3">
-                        <div className="flex justify-between items-center" style={{ height: '24px' }}>
-                          <div className="flex items-center gap-3">
-                            <TrendingUp className="w-4 h-4 text-[#62748E]" />
-                            <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Expected Yield</span>
-                          </div>
-                          <span className="text-base leading-6 font-normal text-[#4E8C37]" style={{ letterSpacing: '-0.3125px' }}>{calculateAPY(deal).toFixed(1)}%</span>
-                        </div>
-                        <div className="flex justify-between items-center" style={{ height: '24px' }}>
-                          <div className="flex items-center gap-3">
-                            <Clock className="w-4 h-4 text-[#62748E]" />
-                            <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Duration</span>
-                          </div>
-                          <span className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>180 days</span>
-                        </div>
-                        <div className="flex justify-between items-center" style={{ height: '24px' }}>
-                          <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Maturity</span>
-                          <span className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>Jun 2026</span>
-                        </div>
-                        <div className="flex justify-between items-center" style={{ height: '24px' }}>
-                          <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>
-                            Risk Level: {deal.risk === 'low' ? 'Low' : deal.risk === 'medium' ? 'Medium' : 'High'}
+                .map((deal) => {
+                  const risk = getDealRisk(deal);
+                  return (
+                    <div
+                      key={deal.id}
+                      className="bg-white border border-[#E2E8F0] rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] hover:shadow-md transition-all cursor-pointer w-full"
+                      onClick={() => router.push(`/shipments/${deal.id}`)}
+                    >
+                      <div className="p-6 flex flex-col gap-4">
+                        {/* Category Tags */}
+                        <div className="flex items-center gap-2 sm:gap-3 justify-between">
+                          <span className="px-[10px] py-0.5 rounded-full text-base font-normal text-[#314158]" style={{ background: '#F1F5F9', letterSpacing: '-0.3125px' }}>
+                            {deal.origin || 'Grain'}
                           </span>
-                          {deal.risk && <RiskBadge risk={deal.risk as 'low' | 'medium' | 'high'} />}
+                          <span className="px-[10px] py-0.5 rounded-full text-base font-normal text-white bg-[#4E8C37]" style={{ letterSpacing: '-0.3125px' }}>
+                            Featured
+                          </span>
                         </div>
 
-                        {/* Collateral Information */}
-                        <div className="pt-[13px] border-t border-[#F1F5F9] flex flex-col gap-0.5">
-                          <div className="flex items-center gap-3 mb-0.5">
-                            <Circle className="w-4 h-4 text-[#90A1B9]" />
-                            <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Collateral</span>
+                        {/* Deal Name */}
+                        <h3 className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>{deal.name}</h3>
+
+                        {/* Key Details */}
+                        <div className="flex flex-col gap-3">
+                          <div className="flex justify-between items-center" style={{ height: '24px' }}>
+                            <div className="flex items-center gap-3">
+                              <TrendingUp className="w-4 h-4 text-[#62748E]" />
+                              <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Expected Yield</span>
+                            </div>
+                            <span className="text-base leading-6 font-normal text-[#4E8C37]" style={{ letterSpacing: '-0.3125px' }}>{calculateAPY(deal).toFixed(1)}%</span>
                           </div>
-                          <p className="text-sm leading-5 font-normal text-[#0F172B] ml-7" style={{ letterSpacing: '-0.150391px' }}>
-                            Physical inventory + Insurance
-                          </p>
-                          <p className="text-xs leading-4 font-normal text-[#62748E] ml-7">
-                            Ratio: 125%
-                          </p>
+                          <div className="flex justify-between items-center" style={{ height: '24px' }}>
+                            <div className="flex items-center gap-3">
+                              <Clock className="w-4 h-4 text-[#62748E]" />
+                              <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Duration</span>
+                            </div>
+                            <span className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>180 days</span>
+                          </div>
+                          <div className="flex justify-between items-center" style={{ height: '24px' }}>
+                            <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Maturity</span>
+                            <span className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>Jun 2026</span>
+                          </div>
+                          <div className="flex justify-between items-center" style={{ height: '24px' }}>
+                            <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>
+                              Risk Level: {risk === 'low' ? 'Low' : risk === 'medium' ? 'Medium' : 'High'}
+                            </span>
+                            <RiskBadge risk={risk} />
+                          </div>
+
+                          {/* Collateral Information */}
+                          <div className="pt-[13px] border-t border-[#F1F5F9] flex flex-col gap-0.5">
+                            <div className="flex items-center gap-3 mb-0.5">
+                              <Circle className="w-4 h-4 text-[#90A1B9]" />
+                              <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Collateral</span>
+                            </div>
+                            <p className="text-sm leading-5 font-normal text-[#0F172B] ml-7" style={{ letterSpacing: '-0.150391px' }}>
+                              Physical inventory + Insurance
+                            </p>
+                            <p className="text-xs leading-4 font-normal text-[#62748E] ml-7">
+                              Ratio: 125%
+                            </p>
+                          </div>
+
+                          {/* Deal Size */}
+                          <div className="flex justify-between items-center" style={{ height: '32px' }}>
+                            <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Deal Size</span>
+                            <span className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>{formatCurrency(deal.investmentAmount)}</span>
+                          </div>
                         </div>
 
-                        {/* Deal Size */}
-                        <div className="flex justify-between items-center" style={{ height: '32px' }}>
-                          <span className="text-sm leading-5 font-normal text-[#62748E]" style={{ letterSpacing: '-0.150391px' }}>Deal Size</span>
-                          <span className="text-base leading-6 font-normal text-[#0F172B]" style={{ letterSpacing: '-0.3125px' }}>{formatCurrency(deal.investmentAmount)}</span>
-                        </div>
+                        {/* Invest Now Button */}
+                        <Button
+                          className="w-full bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-10 mt-auto"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/shipments/${deal.id}`);
+                          }}
+                        >
+                          <span className="text-base leading-6 font-normal" style={{ letterSpacing: '-0.3125px' }}>Invest Now</span>
+                        </Button>
                       </div>
-
-                      {/* Invest Now Button */}
-                      <Button
-                        className="w-full bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-10 mt-auto"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/shipments/${deal.id}`);
-                        }}
-                      >
-                        <span className="text-base leading-6 font-normal" style={{ letterSpacing: '-0.3125px' }}>Invest Now</span>
-                      </Button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           </div>
         )}

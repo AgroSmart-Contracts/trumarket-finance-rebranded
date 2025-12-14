@@ -48,6 +48,8 @@ export interface DealDetails {
     revenue: number;
     netBalance: number;
     roi: number;
+    apy?: number; // APY percentage for the deal
+    isFeatured?: boolean; // Whether the deal is featured
     risk?: 'low' | 'medium' | 'high';
     liquidityPoolSize?: number;
     buyers: any[];

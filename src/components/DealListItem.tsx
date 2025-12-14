@@ -1,7 +1,7 @@
 'use client';
 
 import { DealDetails } from '@/types';
-import { calculateAPY } from '@/lib/financialCalculations';
+import { calculateAPY, getDealRisk } from '@/lib/financialCalculations';
 import { formatCurrency } from '@/lib/formatters';
 import { getStatusLabel } from '@/lib/dealUtils';
 import { ArrowRight, CircleCheckBig, TrendingUp, DollarSign, Circle, Calendar } from 'lucide-react';
@@ -19,6 +19,7 @@ interface DealListItemProps {
 
 export default function DealListItem({ deal, onClick }: DealListItemProps) {
     const apy = calculateAPY(deal);
+    const risk = getDealRisk(deal);
 
     // Color classes for product badges (inspired by home-next)
     const colorClasses = [
@@ -87,7 +88,7 @@ export default function DealListItem({ deal, onClick }: DealListItemProps) {
                         </h3>
                         <StatusBadge status={getStatusLabel(deal.status, deal.currentMilestone || 0)} />
                         {deal.origin && <Badge variant="commodity">{deal.origin}</Badge>}
-                        {deal.risk && <RiskBadge risk={deal.risk as 'low' | 'medium' | 'high'} />}
+                        <RiskBadge risk={risk} />
                     </div>
                     <div className="flex gap-2 w-full sm:w-auto">
                         <Button

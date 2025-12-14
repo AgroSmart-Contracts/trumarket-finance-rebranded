@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { DealDetails } from '@/types';
 import { InfoCard, SectionHeader, DealTermRow, RiskBadge } from '@/components/ui';
 import { formatCurrency } from '@/lib/formatters';
-import { calculateInvestmentLimits } from '@/lib/financialCalculations';
+import { calculateInvestmentLimits, getDealRisk } from '@/lib/financialCalculations';
 import { COLORS, TYPOGRAPHY } from '@/lib/constants';
 
 interface FinancialInformationCardProps {
@@ -65,7 +65,7 @@ export const FinancialInformationCard: React.FC<FinancialInformationCardProps> =
     const principalInvested = shipment.investmentAmount || 0;
     const revenue = shipment.revenue || 0;
     const principalRequired = shipment.liquidityPoolSize || shipment.investmentAmount || 0;
-    const risk = shipment.risk || 'low';
+    const risk = useMemo(() => getDealRisk(shipment), [shipment]);
 
     // Calculate investment limits using utility function
     const { min: minInvestment, max: maxInvestment } = useMemo(
