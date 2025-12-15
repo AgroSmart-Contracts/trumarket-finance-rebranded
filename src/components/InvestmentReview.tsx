@@ -321,7 +321,7 @@ const InvestmentReview: React.FC<InvestmentReviewProps> = ({
                                     className="text-sm leading-5 font-normal text-[#45556C]"
                                     style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tighter }}
                                 >
-                                    Collateral Ratio: 125%
+                                    Collateral Ratio: 375%
                                 </span>
                             </div>
                         </InfoBox>

@@ -20,9 +20,19 @@ export default function DealsInvestorDashboard() {
   const { shipments: deals, loading } = useICPShipments();
 
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'in-progress' | 'completed'>('active');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const applyFilters = (dealsToFilter: DealDetails[]): DealDetails[] => {
     return dealsToFilter.filter((deal) => {
+      // Search filter - filter by deal name (case-insensitive)
+      if (searchQuery.trim() !== '') {
+        const query = searchQuery.toLowerCase().trim();
+        const dealName = (deal.name || '').toLowerCase();
+        if (!dealName.includes(query)) {
+          return false;
+        }
+      }
+
       // Status filter
       if (statusFilter !== 'all') {
         if (statusFilter === 'active' && !(deal.status === 'proposal' || (deal.status === 'confirmed' && deal.currentMilestone === 0))) {
@@ -181,7 +191,7 @@ export default function DealsInvestorDashboard() {
                               Physical inventory + Insurance
                             </p>
                             <p className="text-xs leading-4 font-normal text-[#62748E] ml-7">
-                              Ratio: 125%
+                              Ratio: 375%
                             </p>
                           </div>
 
@@ -217,15 +227,17 @@ export default function DealsInvestorDashboard() {
             <input
               type="text"
               placeholder="Search deals..."
-              className="w-full pl-10 pr-4 py-2 bg-[#FAFAFA] border-none rounded-md text-base font-normal text-[#0F172A] focus:outline-none"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-[#FAFAFA] border-none rounded-md text-base font-normal text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#4E8C37] focus:ring-opacity-20"
               style={{ height: '40px', letterSpacing: '-0.3125px' }}
             />
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="bg-white rounded-md border border-[#E2E8F0] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-1.5 mb-6 w-full overflow-x-auto">
-          <div className="flex gap-1 sm:gap-0 sm:justify-between min-w-max sm:min-w-0">
+        <div className="bg-white rounded-md border border-[#E2E8F0] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-3 w-full overflow-x-auto">
+          <div className="flex gap-1 sm:gap-0 justify-between min-w-max sm:min-w-0">
             <button
               onClick={() => setStatusFilter('all')}
               className={`px-2 sm:px-3 py-2 sm:py-2.5 rounded text-xs sm:text-sm md:text-base font-normal transition-all whitespace-nowrap flex-shrink-0 ${statusFilter === 'all'

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { DealDetails } from '@/types';
 import { useICPShipment } from '@/hooks/useICPShipments';
 import { calculateAPY, calculateInvestmentLimits } from '@/lib/financialCalculations';
@@ -70,6 +70,7 @@ const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipment }) =
     const [copied, setCopied] = useState(false);
     const [showReview, setShowReview] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [investmentError, setInvestmentError] = useState<string | null>(null);
     const apy = calculateAPY(shipment);
 
     const investmentCalculations = calculateInvestmentReturns(investmentAmount, apy);
@@ -91,11 +92,38 @@ const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipment }) =
 
     const handleQuickAmount = useCallback((amount: number) => {
         setInvestmentAmount(amount.toString());
+        setInvestmentError(null); // Clear error when amount changes
     }, []);
+
+    // Clear error when investment amount changes
+    useEffect(() => {
+        setInvestmentError(null);
+    }, [investmentAmount]);
 
     const handleInvest = useCallback(() => {
         const investmentValue = parseNumericString(investmentAmount);
         const { min, max } = calculateInvestmentLimits(shipment.investmentAmount || 0);
+
+        // Clear any previous errors
+        setInvestmentError(null);
+
+        // Validate investment amount and show error message if invalid
+        if (investmentValue <= 0 || isNaN(investmentValue)) {
+            setInvestmentError(`Please enter a valid investment amount. Minimum: ${formatCurrency(min)}, Maximum: ${formatCurrency(max)}`);
+            return;
+        }
+
+        if (investmentValue < min) {
+            setInvestmentError(`Investment amount is too low. Minimum required: ${formatCurrency(min)}. Your amount: ${formatCurrency(investmentValue)}`);
+            return;
+        }
+
+        if (investmentValue > max) {
+            setInvestmentError(`Investment amount exceeds the maximum allowed. Maximum: ${formatCurrency(max)}. Your amount: ${formatCurrency(investmentValue)}`);
+            return;
+        }
+
+        // If validation passes, proceed to review
         if (investmentValue >= min && investmentValue <= max) {
             setShowReview(true);
         }
@@ -162,10 +190,9 @@ const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipment }) =
                     </Button>
                     <Button
                         onClick={handleInvest}
-                        className="bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-10 px-4 sm:px-8 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-10 px-4 sm:px-8 w-full sm:w-auto ${!isInvestButtonEnabled ? 'opacity-75 cursor-not-allowed' : ''}`}
                         style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
-                        disabled={!isInvestButtonEnabled}
-                        title={!isInvestButtonEnabled ? `Minimum investment is ${formatCurrency(minInvestment)}` : undefined}
+                        title={!isInvestButtonEnabled ? `Minimum investment is ${formatCurrency(minInvestment)}, Maximum is ${formatCurrency(maxInvestment)}` : undefined}
                     >
                         Invest Now
                     </Button>
@@ -196,7 +223,7 @@ const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipment }) =
 
                     {/* Right Column */}
                     <div className="w-full lg:w-[320px] flex flex-col gap-6">
-                        <InvestmentDetailsCard apy={apy} onInvest={handleInvest} />
+                        <InvestmentDetailsCard apy={apy} onInvest={handleInvest} investmentError={investmentError} />
                         <SmartContractCard
                             vaultAddress={shipment.vaultAddress}
                             copied={copied}

@@ -97,7 +97,7 @@ const Header: React.FC = () => {
                     {/* Right Section: Navigation and User */}
                     <div className="flex items-center gap-3">
                         {/* Navigation Links */}
-                        <div className="hidden md:flex items-center gap-3">
+                        {/* <div className="hidden md:flex items-center gap-3">
                             <button
                                 className="px-3 py-2 bg-[#FAFAFA] rounded-md text-base font-normal text-[#0F172A] hover:bg-gray-100 transition-colors"
                                 style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
@@ -110,7 +110,7 @@ const Header: React.FC = () => {
                             >
                                 Settings
                             </button>
-                        </div>
+                        </div> */}
 
                         {wallet ? (
                             <>

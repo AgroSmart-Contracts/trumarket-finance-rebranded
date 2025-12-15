@@ -1,9 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { DealDetails } from '@/types';
 import { InfoCard, SectionHeader, DealTermRow, RiskBadge } from '@/components/ui';
 import { formatCurrency } from '@/lib/formatters';
 import { calculateInvestmentLimits, getDealRisk } from '@/lib/financialCalculations';
 import { COLORS, TYPOGRAPHY } from '@/lib/constants';
+import useWallet from '@/hooks/useWallet';
+import useDealOwnership from '@/hooks/useDealOwnership';
 
 interface FinancialInformationCardProps {
     apy: number;
@@ -60,12 +62,67 @@ const MetricItem: React.FC<MetricItemProps> = ({ label, value, isPositive = fals
     </div>
 );
 
+/**
+ * Calculate YEARFRAC (fractional years between two dates)
+ * Convention 1 = Actual/Actual (actual days / actual days in year)
+ */
+const calculateYEARFRAC = (startDate: Date, endDate: Date, convention: number = 1): number => {
+    if (convention === 1) {
+        // Actual/Actual: actual days / actual days in year
+        const diffTime = endDate.getTime() - startDate.getTime();
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+        // Calculate actual days in the year containing the start date
+        const startYear = startDate.getFullYear();
+        const isLeapYear = (year: number) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        const daysInYear = isLeapYear(startYear) ? 366 : 365;
+
+        return diffDays / daysInYear;
+    }
+    return 0;
+};
+
 export const FinancialInformationCard: React.FC<FinancialInformationCardProps> = ({ apy, shipment }) => {
+    // Wallet and position hooks
+    const { wallet } = useWallet();
+    const { shares, refresh } = useDealOwnership(shipment.vaultAddress || '', shipment.nftID || 0);
+
+    // Refresh position when wallet connects or shipment changes
+    useEffect(() => {
+        if (wallet?.address && shipment.vaultAddress) {
+            refresh();
+        }
+    }, [wallet?.address, shipment.vaultAddress, refresh]);
+
     // Use actual data from shipment
     const principalInvested = shipment.investmentAmount || 0;
     const revenue = shipment.revenue || 0;
     const principalRequired = shipment.liquidityPoolSize || shipment.investmentAmount || 0;
     const risk = useMemo(() => getDealRisk(shipment), [shipment]);
+
+    // Calculate user's position (convert shares to assets)
+    const userPosition = useMemo(() => {
+        if (!wallet?.address || !shares || shares === 0) return 0;
+        return shares; // shares is already in USDC format from useDealOwnership
+    }, [wallet?.address, shares]);
+
+    // Calculate yield based on position and APY using YEARFRAC
+    const yieldAmount = useMemo(() => {
+        if (!wallet?.address || !userPosition || userPosition === 0 || !apy) return 0;
+
+        // Use shipping start date as the start date, or current date if not available
+        const startDate = shipment.shippingStartDate
+            ? new Date(shipment.shippingStartDate)
+            : new Date();
+        const today = new Date();
+
+        // Calculate fractional years using YEARFRAC (convention 1 = Actual/Actual)
+        const yearFrac = calculateYEARFRAC(startDate, today, 1);
+
+        // Yield = position * (apy / 100) * YEARFRAC
+        // This gives the total yield earned so far
+        return userPosition * (apy / 100) * yearFrac;
+    }, [wallet?.address, userPosition, apy, shipment.shippingStartDate]);
 
     // Calculate investment limits using utility function
     const { min: minInvestment, max: maxInvestment } = useMemo(
@@ -194,12 +251,29 @@ export const FinancialInformationCard: React.FC<FinancialInformationCardProps> =
 
             {/* Deal Terms */}
             <div className="pt-[17px] border-t border-[#E2E8F0] flex flex-col gap-4">
-                <DealTermRow
+                {/* <DealTermRow
                     label="Payment Structure"
                     value="Quarterly interest payments with principal at maturity"
                 />
                 <DealTermRow label="Management Fee" value="0% annually" />
-                <DealTermRow label="Performance Fee" value="0%" />
+                <DealTermRow label="Performance Fee" value="0%" /> */}
+
+                {/* User Position - Only shown if wallet is connected */}
+                {wallet?.address && (
+                    <DealTermRow
+                        label="Your Position"
+                        value={formatCurrency(userPosition)}
+                    />
+                )}
+
+                {/* Yield - Only shown if wallet is connected and has position */}
+                {wallet?.address && (
+                    <DealTermRow
+                        label="Your Yield"
+                        value={formatCurrency(yieldAmount)}
+                    />
+                )}
+
                 <DealTermRow
                     label="Min Investment"
                     value={formatCurrency(minInvestment)}

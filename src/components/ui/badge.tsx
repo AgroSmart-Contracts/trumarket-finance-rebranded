@@ -11,7 +11,7 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const badgeStyles: Record<BadgeVariant, string> = {
     status: 'bg-[#F8FAFC] text-[#0F172A]',
-    commodity: 'bg-[#F1F5F9] text-[#314158]',
+    commodity: 'bg-[#F1F5F9] text-[#314158] w-min',
     risk: 'bg-[#F8FAFC] text-[#0F172A]',
     verified: 'bg-[#4E8C37] text-white',
     featured: 'bg-[#FFFBEB] text-[#EEBA32] border border-[rgba(238,186,50,0.2)]',
@@ -29,7 +29,7 @@ export const Badge: React.FC<BadgeProps> = ({
     return (
         <span
             className={cn(
-                'px-[10px] py-0.5 rounded-full text-base font-normal',
+                'px-3 py-2 rounded-full text-base font-normal',
                 badgeStyles[variant],
                 className
             )}

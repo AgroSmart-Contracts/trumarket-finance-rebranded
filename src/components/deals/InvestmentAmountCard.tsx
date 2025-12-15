@@ -4,6 +4,7 @@ import { DealDetails } from '@/types';
 import { InfoCard, SectionHeader, QuickAmountButtons, CurrencyInput, InvestmentInfoDisplay } from '@/components/ui';
 import { calculateInvestmentLimits } from '@/lib/financialCalculations';
 import { INVESTMENT, TYPOGRAPHY } from '@/lib/constants';
+import useWallet from '@/hooks/useWallet';
 
 interface InvestmentAmountCardProps {
     investmentAmount: string;
@@ -18,6 +19,9 @@ export const InvestmentAmountCard: React.FC<InvestmentAmountCardProps> = ({
     onQuickAmount,
     shipment,
 }) => {
+    // Get wallet connection status and balance
+    const { wallet } = useWallet();
+
     // Calculate min and max investment based on deal amount
     const { min: minInvestment, max: maxInvestment } = useMemo(
         () => calculateInvestmentLimits(shipment.investmentAmount || 0),
@@ -30,14 +34,26 @@ export const InvestmentAmountCard: React.FC<InvestmentAmountCardProps> = ({
         [minInvestment, maxInvestment]
     );
 
-    // Investment info items
+    // Investment info items - show wallet balance only if connected
     const investmentInfoItems = useMemo(
-        () => [
-            { label: 'Minimum Investment', value: minInvestment },
-            { label: 'Maximum Investment', value: maxInvestment },
-            { label: 'Available Balance', value: INVESTMENT.DEFAULT_AVAILABLE_BALANCE, valueColor: 'text-[#4E8C37]' },
-        ],
-        [minInvestment, maxInvestment]
+        () => {
+            const items: Array<{ label: string; value: number; valueColor?: string }> = [
+                { label: 'Minimum Investment', value: minInvestment },
+                { label: 'Maximum Investment', value: maxInvestment },
+            ];
+
+            // Only show Available Balance if wallet is connected
+            if (wallet?.address && wallet.balanceUnderlying !== undefined) {
+                items.push({
+                    label: 'Available Balance',
+                    value: wallet.balanceUnderlying,
+                    valueColor: 'text-[#4E8C37]',
+                });
+            }
+
+            return items;
+        },
+        [minInvestment, maxInvestment, wallet?.address, wallet?.balanceUnderlying]
     );
 
     return (
@@ -56,7 +72,7 @@ export const InvestmentAmountCard: React.FC<InvestmentAmountCardProps> = ({
                         value={investmentAmount}
                         onChange={setInvestmentAmount}
                         icon={DollarSign}
-                        />
+                    />
                 </div>
 
                 <InvestmentInfoDisplay items={investmentInfoItems} />
@@ -65,6 +81,8 @@ export const InvestmentAmountCard: React.FC<InvestmentAmountCardProps> = ({
                     onSelect={onQuickAmount}
                     amounts={quickAmounts}
                     minAmount={minInvestment}
+                    maxAmount={maxInvestment}
+                    showPercentages={true}
                 />
             </div>
         </InfoCard>

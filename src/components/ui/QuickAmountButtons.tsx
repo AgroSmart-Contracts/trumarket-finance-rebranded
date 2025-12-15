@@ -8,6 +8,8 @@ interface QuickAmountButtonsProps {
     amounts?: number[];
     className?: string;
     minAmount?: number;
+    maxAmount?: number;
+    showPercentages?: boolean;
 }
 
 const defaultAmounts = [
@@ -25,8 +27,16 @@ export const QuickAmountButtons: React.FC<QuickAmountButtonsProps> = ({
     amounts = defaultAmounts,
     className,
     minAmount,
+    maxAmount,
+    showPercentages = false,
 }) => {
     const getLabel = (amount: number, index: number) => {
+        // Show percentages if enabled and maxAmount is provided
+        if (showPercentages && maxAmount && maxAmount > 0) {
+            const percentage = Math.round((amount / maxAmount) * 100);
+            return `${percentage}%`;
+        }
+
         // Check if this is the minimum amount
         const isMinAmount = (minAmount !== undefined && amount === minAmount) || (index === 0 && amounts && amount === amounts[0]);
 

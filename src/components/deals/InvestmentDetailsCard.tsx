@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertCircle } from 'lucide-react';
 import { InfoCard } from '@/components/ui/InfoCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Button } from '@/components/ui/button';
@@ -8,9 +9,10 @@ import { INVESTMENT, TYPOGRAPHY } from '@/lib/constants';
 interface InvestmentDetailsCardProps {
     apy: number;
     onInvest: () => void;
+    investmentError?: string | null;
 }
 
-export const InvestmentDetailsCard: React.FC<InvestmentDetailsCardProps> = ({ apy, onInvest }) => {
+export const InvestmentDetailsCard: React.FC<InvestmentDetailsCardProps> = ({ apy, onInvest, investmentError }) => {
     return (
         <InfoCard style={{ padding: '25px 25px 25px', gap: '16px' }}>
             <SectionHeader>Investment Details</SectionHeader>
@@ -96,6 +98,16 @@ export const InvestmentDetailsCard: React.FC<InvestmentDetailsCardProps> = ({ ap
             >
                 Download Prospectus
             </Button>
+
+            {/* Error Message - Below Download Prospectus Button */}
+            {investmentError && (
+                <div className="flex items-start gap-2 bg-[#FEF2F2] border border-[#FEE2E2] rounded-md px-3 py-2 animate-in fade-in slide-in-from-top-2">
+                    <AlertCircle className="w-4 h-4 text-[#DC2626] flex-shrink-0 mt-0.5" />
+                    <p className="text-sm leading-5 font-normal text-[#DC2626]" style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tighter }}>
+                        {investmentError}
+                    </p>
+                </div>
+            )}
         </InfoCard>
     );
 };
