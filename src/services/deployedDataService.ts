@@ -26,8 +26,10 @@ export class DeployedDataService {
         try {
             console.log("Connecting to MongoDB...");
             await this.mongoClient.connect();
-            this.mongoDb = this.mongoClient.db('prod');
-            console.log("Connected to MongoDB successfully");
+            // Use 'test' database for development, 'prod' for production
+            const dbName = serverConfig.databaseName;
+            this.mongoDb = this.mongoClient.db(dbName);
+            console.log(`Connected to MongoDB database: ${dbName} (${serverConfig.isDevelopment ? 'development' : 'production'} mode)`);
             return this.mongoDb;
         } catch (error) {
             console.error('Error connecting to MongoDB:', error);
