@@ -37,11 +37,10 @@ export class DealLogService {
             await this.client.connect();
             console.log("Connected to MongoDB successfully");
             console.log("Available databases:", await this.client.db().admin().listDatabases());
-            // await this.client.db("prod").command({ ping: 1 });
-            // await this.client.db("test").command({ ping: 1 });
-            // await this.client.db("admin").command({ ping: 1 });
-            this.db = await this.client.db('prod');
-            console.log("Connected to MongoDB successfully");
+            // Use 'test' database for development, 'prod' for production
+            const dbName = serverConfig.databaseName;
+            this.db = await this.client.db(dbName);
+            console.log(`Connected to MongoDB database: ${dbName} (${serverConfig.isDevelopment ? 'development' : 'production'} mode)`);
             return this.db;
         } catch (error) {
             console.error('Error connecting to MongoDB:', error);

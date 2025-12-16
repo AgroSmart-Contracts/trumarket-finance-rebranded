@@ -8,3 +8,4 @@ export { InvestmentAmountCard } from './InvestmentAmountCard';
 export { InvestmentSummaryCard } from './InvestmentSummaryCard';
 export { InvestmentDetailsCard } from './InvestmentDetailsCard';
 export { SmartContractCard } from './SmartContractCard';
+export { YourInfoCard } from './YourInfoCard';
