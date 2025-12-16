@@ -38,8 +38,8 @@ export const InvestmentAmountCard: React.FC<InvestmentAmountCardProps> = ({
     const investmentInfoItems = useMemo(
         () => {
             const items: Array<{ label: string; value: number; valueColor?: string }> = [
-                { label: 'Minimum Investment', value: minInvestment },
-                { label: 'Maximum Investment', value: maxInvestment },
+            { label: 'Minimum Investment', value: minInvestment },
+            { label: 'Maximum Investment', value: maxInvestment },
             ];
 
             // Only show Available Balance if wallet is connected

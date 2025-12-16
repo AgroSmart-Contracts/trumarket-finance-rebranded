@@ -1,4 +1,5 @@
 import { DealDetails } from '@/types';
+import { INVESTMENT } from './constants';
 
 /**
  * FINANCIAL CALCULATIONS
@@ -116,8 +117,6 @@ export function calculatePortfolioMetrics(deals: DealDetails[]) {
     };
 }
 
-import { INVESTMENT } from './constants';
-
 /**
  * Calculate investment limits based on deal amount
  * Min investment is 10% of deal amount, max is 100% of deal amount
@@ -127,6 +126,26 @@ export function calculateInvestmentLimits(dealAmount: number): { min: number; ma
     const max = dealAmount || INVESTMENT.MAX_INVESTMENT;
 
     return { min, max };
+}
+
+/**
+ * Calculate YEARFRAC (fractional years between two dates)
+ * Convention 1 = Actual/Actual (actual days / actual days in year)
+ */
+export function calculateYEARFRAC(startDate: Date, endDate: Date, convention: number = 1): number {
+    if (convention === 1) {
+        // Actual/Actual: actual days / actual days in year
+        const diffTime = endDate.getTime() - startDate.getTime();
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+        // Calculate actual days in the year containing the start date
+        const startYear = startDate.getFullYear();
+        const isLeapYear = (year: number) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        const daysInYear = isLeapYear(startYear) ? 366 : 365;
+
+        return diffDays / daysInYear;
+    }
+    return 0;
 }
 
 /**

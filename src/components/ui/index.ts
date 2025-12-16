@@ -20,3 +20,5 @@ export { QuickAmountButtons } from './QuickAmountButtons';
 export { Sparkline } from './Sparkline';
 export { CurrencyInput } from './CurrencyInput';
 export { InvestmentInfoDisplay } from './InvestmentInfoDisplay';
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
+export { Button } from './button';
