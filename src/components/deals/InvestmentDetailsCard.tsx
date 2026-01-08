@@ -10,9 +10,10 @@ interface InvestmentDetailsCardProps {
     apy: number;
     onInvest: () => void;
     investmentError?: string | null;
+    isConnecting?: boolean;
 }
 
-export const InvestmentDetailsCard: React.FC<InvestmentDetailsCardProps> = ({ apy, onInvest, investmentError }) => {
+export const InvestmentDetailsCard: React.FC<InvestmentDetailsCardProps> = ({ apy, onInvest, investmentError, isConnecting = false }) => {
     return (
         <InfoCard style={{ padding: '25px 25px 25px', gap: '16px' }}>
             <SectionHeader>Investment Details</SectionHeader>
@@ -85,10 +86,11 @@ export const InvestmentDetailsCard: React.FC<InvestmentDetailsCardProps> = ({ ap
 
             <Button
                 onClick={onInvest}
-                className="w-full bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-10"
+                disabled={isConnecting}
+                className={`w-full bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-10 ${isConnecting ? 'opacity-75 cursor-not-allowed' : ''}`}
                 style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
             >
-                Invest Now
+                {isConnecting ? 'Connecting...' : 'Invest Now'}
             </Button>
 
             <Button

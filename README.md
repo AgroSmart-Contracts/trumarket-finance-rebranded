@@ -94,7 +94,12 @@ npm install
    Create a `.env.local` file in the root directory:
 
 ```bash
-DATABASE_URL=mongodb://localhost:27017/trumarket-api
+NEXT_PUBLIC_DATABASE_URL=mongodb://localhost:27017/trumarket-api
+
+# Development/Production Mode
+# Set to 'true' to use 'test' database, 'false' or unset to use 'prod' database
+# Defaults to 'development' mode if NODE_ENV=development
+IS_DEVELOPMENT=true
 
 # AWS Configuration (optional, for file uploads)
 AWS_REGION=us-east-1
