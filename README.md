@@ -88,7 +88,7 @@ This platform focuses on capital allocation, visibility, and returns, while oper
 ### Setup
 
 ```bash
-git clone https://github.com/AgroSmart-Contracts/trumarket-finance-next.git
+git clone https://github.com/AgroSmart-Contracts/trumarket-finance-rebranded.git
 
 npm install
 npm run dev
