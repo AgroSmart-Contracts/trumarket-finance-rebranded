@@ -44,7 +44,7 @@ Demo video: https://www.loom.com/share/76d6496f2dd04cbc92761a6355bdba08
 
 ## Platform preview
 
-The images below show the main investor flows. Replace with updated screenshots if needed.
+The images below show the main investor flows.
 
 ![Investor dashboard](screenshots/dashboard.png)  
 ![Deal list and risk view](screenshots/deals-list.png)  
