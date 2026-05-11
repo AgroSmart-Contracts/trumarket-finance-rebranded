@@ -1,25 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import DealCard from '@/components/DealCard';
 import DealListItem from '@/components/DealListItem';
-import { useICPShipments } from '@/hooks/useICPShipments';
+import { usePublishedDeals } from '@/hooks/usePublishedDeals';
 import { DealDetails } from '@/types';
 import { calculatePortfolioMetrics, calculateAPY, calculateRevenue, getDealRisk } from '@/lib/financialCalculations';
 import { DollarSign, TrendingUp, Clock, BarChart3, Search, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency, formatCurrencyUsdMetric } from '@/lib/formatters';
 import { MetricCard } from '@/components/ui/MetricCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Sparkline } from '@/components/ui/Sparkline';
 import { RiskBadge } from '@/components/ui/RiskBadge';
 
 export default function DealsInvestorDashboard() {
-  const router = useRouter();
-  const { shipments: deals, loading } = useICPShipments();
+  const { deals, loading } = usePublishedDeals();
 
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'in-progress' | 'completed'>('active');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'in-progress' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const applyFilters = (dealsToFilter: DealDetails[]): DealDetails[] => {
@@ -50,7 +49,14 @@ export default function DealsInvestorDashboard() {
     });
   };
 
-  const filteredDeals = applyFilters(deals);
+  // Sort deals by creation date (newest first)
+  const sortedDeals = [...deals].sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return dateB - dateA; // Newest first
+  });
+
+  const filteredDeals = applyFilters(sortedDeals);
 
   // Calculate portfolio metrics using the new calculation functions
   const portfolioMetrics = calculatePortfolioMetrics(filteredDeals);
@@ -72,7 +78,8 @@ export default function DealsInvestorDashboard() {
   }
 
   // Calculate metrics for display
-  const dealValueGenerated = totalInvested + totalRevenue;
+  // NOTE: Deal Value Generated is currently fixed to $13.4M as requested
+  const dealValueGenerated = 13_400_000;
   const yieldGenerated = averageAPY;
   const aum = totalInvested;
   const activeDealsCount = activeCount;
@@ -81,10 +88,10 @@ export default function DealsInvestorDashboard() {
     <div className="min-h-screen bg-[#FAFAFA]">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8 pb-0 flex flex-col gap-[24px]">
         {/* Metrics Summary Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
           <MetricCard
             label="Deal Value Generated"
-            value={formatCurrency(dealValueGenerated)}
+            value={`$${dealValueGenerated / 1_000_000}M`}
             icon={DollarSign}
             iconColor="#4E8C37"
             iconBackgroundColor="#ECFDF5"
@@ -104,7 +111,7 @@ export default function DealsInvestorDashboard() {
           />
           <MetricCard
             label="AUM"
-            value={formatCurrency(aum)}
+            value={formatCurrencyUsdMetric(aum)}
             icon={Clock}
             iconColor="#EEBA32"
             iconBackgroundColor="#FFFBEB"
@@ -135,10 +142,10 @@ export default function DealsInvestorDashboard() {
                 .map((deal) => {
                   const risk = getDealRisk(deal);
                   return (
-                    <div
+                    <Link
                       key={deal.id}
-                      className="bg-white border border-[#E2E8F0] rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] hover:shadow-md transition-all cursor-pointer w-full"
-                      onClick={() => router.push(`/shipments/${deal.id}`)}
+                      href={`/shipments/${deal.id}`}
+                      className="block bg-white border border-[#E2E8F0] rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] hover:shadow-md transition-all cursor-pointer w-full"
                     >
                       <div className="p-6 flex flex-col gap-4">
                         {/* Category Tags */}
@@ -203,17 +210,15 @@ export default function DealsInvestorDashboard() {
                         </div>
 
                         {/* Invest Now Button */}
-                        <Button
-                          className="w-full bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-10 mt-auto"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/shipments/${deal.id}`);
-                          }}
-                        >
-                          <span className="text-base leading-6 font-normal" style={{ letterSpacing: '-0.3125px' }}>Invest Now</span>
-                        </Button>
+                        <Link href={`/shipments/${deal.id}`}>
+                          <Button
+                            className="w-full bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-10 mt-auto"
+                          >
+                            <span className="text-base leading-6 font-normal" style={{ letterSpacing: '-0.3125px' }}>Invest Now</span>
+                          </Button>
+                        </Link>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
             </div>
@@ -297,20 +302,13 @@ export default function DealsInvestorDashboard() {
                   <DealListItem
                     key={deal.id}
                     deal={deal}
-                    onClick={() => router.push(`/shipments/${deal.id}`)}
                   />
                 ))}
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                 {filteredDeals.filter(d => d.status !== 'finished').map((deal) => (
-                  <div
-                    key={deal.id}
-                    onClick={() => router.push(`/shipments/${deal.id}`)}
-                    className="w-full"
-                  >
-                    <DealCard deal={deal} />
-                  </div>
+                  <DealCard key={deal.id} deal={deal} />
                 ))}
               </div>
             )}
@@ -335,10 +333,10 @@ export default function DealsInvestorDashboard() {
               {filteredDeals.filter(d => d.status === 'finished').map((deal) => {
                 const interestPaid = calculateRevenue(deal);
                 return (
-                  <div
+                  <Link
                     key={deal.id}
-                    onClick={() => router.push(`/shipments/${deal.id}`)}
-                    className="bg-white border border-gray-200 rounded-lg p-[25px] hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-[#4E8C37]"
+                    href={`/shipments/${deal.id}`}
+                    className="block bg-white border border-gray-200 rounded-lg p-[25px] hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-[#4E8C37]"
                   >
                     {/* Mobile Layout */}
                     <div className="block md:hidden space-y-4">
@@ -409,7 +407,7 @@ export default function DealsInvestorDashboard() {
                         </span>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>

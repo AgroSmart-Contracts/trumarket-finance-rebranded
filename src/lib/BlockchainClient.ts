@@ -1,18 +1,16 @@
 'use client';
 
-import { ethers, formatUnits } from 'ethers';
+import { ethers, formatUnits, BrowserProvider } from 'ethers';
 import ERC20Abi from './abis/ERC20.abi';
 
 export class BlockchainClient {
     erc20?: ethers.Contract;
 
-    constructor(investmentTokenAddress: string) {
-        if (typeof window === 'undefined' || !window.ethereum) {
-            console.error('MetaMask is not detected');
+    constructor(investmentTokenAddress: string, provider?: BrowserProvider) {
+        if (!provider) {
+            console.error('Provider is not available');
             return;
         }
-
-        const provider = new ethers.BrowserProvider(window.ethereum);
 
         this.erc20 = new ethers.Contract(
             investmentTokenAddress,
@@ -38,8 +36,8 @@ export class BlockchainClient {
         }
     }
 
-    async getVaultAssets(address: string): Promise<number> {
-        if (typeof window === 'undefined' || !window.ethereum) {
+    async getVaultAssets(address: string, provider?: BrowserProvider): Promise<number> {
+        if (!provider) {
             return 0;
         }
 
@@ -48,7 +46,7 @@ export class BlockchainClient {
             const vault = new ethers.Contract(
                 address,
                 DealVaultAbi,
-                window.ethereum as any
+                provider
             );
 
             const balance = await vault.totalAssets();

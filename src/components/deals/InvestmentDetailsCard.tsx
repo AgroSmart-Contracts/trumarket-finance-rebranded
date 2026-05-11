@@ -4,15 +4,61 @@ import { InfoCard } from '@/components/ui/InfoCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/formatters';
-import { INVESTMENT, TYPOGRAPHY } from '@/lib/constants';
+import { TYPOGRAPHY } from '@/lib/constants';
+import { DealDetails } from '@/types';
+import { calculateInvestmentLimits } from '@/lib/financialCalculations';
+import { calculateDuration } from '@/lib/dealUtils';
+import { formatDateShort } from '@/lib/dateUtils';
 
 interface InvestmentDetailsCardProps {
     apy: number;
+    deal: DealDetails;
     onInvest: () => void;
     investmentError?: string | null;
 }
 
-export const InvestmentDetailsCard: React.FC<InvestmentDetailsCardProps> = ({ apy, onInvest, investmentError }) => {
+export const InvestmentDetailsCard: React.FC<InvestmentDetailsCardProps> = ({ apy, deal, onInvest, investmentError }) => {
+    // Calculate min investment (10% of deal amount)
+    const { min: minInvestment } = calculateInvestmentLimits(deal.investmentAmount || 0);
+
+    // Calculate duration from shipping dates
+    const duration = deal.shippingStartDate && deal.expectedShippingEndDate
+        ? calculateDuration(deal.shippingStartDate, deal.expectedShippingEndDate)
+        : 0;
+
+    // Format maturity date
+    const maturityDate = deal.expectedShippingEndDate
+        ? formatDateShort(deal.expectedShippingEndDate)
+        : 'N/A';
+
+    // Check if there are any documents/prospectus available
+    const hasProspectus = deal.docs && Array.isArray(deal.docs) && deal.docs.length > 0;
+    const isClosedDeal = deal.status === 'finished';
+
+    const getProspectusUrl = (): string | undefined => {
+        if (!hasProspectus) return undefined;
+        const rawUrl = deal.docs[0]?.url;
+        if (!rawUrl) return undefined;
+
+        // If it's a Google Drive \"view\" link, convert it to a direct download URL
+        // Example: https://drive.google.com/file/d/<FILE_ID>/view?usp=sharing
+        const driveMatch = rawUrl.match(/https?:\/\/drive\.google\.com\/file\/d\/([^/]+)\//);
+        if (driveMatch && driveMatch[1]) {
+            const fileId = driveMatch[1];
+            return `https://drive.google.com/uc?export=download&id=${fileId}`;
+        }
+
+        return rawUrl;
+    };
+
+    const handleDownloadProspectus = () => {
+        const url = getProspectusUrl();
+        if (!url) return;
+        if (typeof window !== 'undefined') {
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+    };
+
     return (
         <InfoCard style={{ padding: '25px 25px 25px', gap: '16px' }}>
             <SectionHeader>Investment Details</SectionHeader>
@@ -50,7 +96,7 @@ export const InvestmentDetailsCard: React.FC<InvestmentDetailsCardProps> = ({ ap
                         className="text-sm leading-5 font-normal text-[#0F172B]"
                         style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tighter }}
                     >
-                        {formatCurrency(INVESTMENT.MIN_INVESTMENT)}
+                        {formatCurrency(minInvestment)}
                     </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -64,7 +110,7 @@ export const InvestmentDetailsCard: React.FC<InvestmentDetailsCardProps> = ({ ap
                         className="text-sm leading-5 font-normal text-[#0F172B]"
                         style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tighter }}
                     >
-                        {INVESTMENT.DEAL_DURATION_DAYS} days
+                        {duration > 0 ? `${duration} days` : 'N/A'}
                     </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -78,22 +124,31 @@ export const InvestmentDetailsCard: React.FC<InvestmentDetailsCardProps> = ({ ap
                         className="text-sm leading-5 font-normal text-[#0F172B]"
                         style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tighter }}
                     >
-                        June 15, 2026
+                        {maturityDate}
                     </span>
                 </div>
             </div>
 
             <Button
                 onClick={onInvest}
-                className="w-full bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-10"
+                disabled={isClosedDeal}
+                className={`w-full rounded-md h-10 ${isClosedDeal
+                    ? 'bg-[#E2E8F0] text-[#62748E] cursor-not-allowed'
+                    : 'bg-[#4E8C37] hover:bg-[#3A6A28] text-white'
+                    }`}
                 style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
             >
-                Invest Now
+                {isClosedDeal ? 'Deal Closed' : 'Invest Now'}
             </Button>
 
             <Button
                 variant="outline"
-                className="w-full bg-[#FAFAFA] border border-[#CAD5E2] text-[#314158] hover:bg-gray-50 rounded-md h-10"
+                disabled={!hasProspectus}
+                onClick={handleDownloadProspectus}
+                className={`w-full bg-[#FAFAFA] border border-[#CAD5E2] text-[#314158] rounded-md h-10 transition-all duration-150 ${hasProspectus
+                    ? 'hover:bg-[#F0F0F0] hover:border-[#A8B8CC] active:bg-[#E5E5E5] active:border-[#8FA0B5] active:scale-[0.98]'
+                    : 'opacity-50 cursor-not-allowed'
+                    }`}
                 style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
             >
                 Download Prospectus

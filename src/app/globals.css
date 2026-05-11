@@ -432,3 +432,33 @@ body {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
 }
+
+/* Verification Input Styles */
+.vi-container {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.vi-character {
+  width: 3rem;
+  height: 3.5rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  background: white;
+  transition: all 0.2s;
+}
+
+.vi-character:focus {
+  outline: none;
+  border-color: var(--tm-primary);
+  box-shadow: 0 0 0 3px rgba(78, 140, 55, 0.1);
+}
+
+.vi-character-selected {
+  border-color: var(--tm-primary);
+  box-shadow: 0 0 0 3px rgba(78, 140, 55, 0.1);
+}

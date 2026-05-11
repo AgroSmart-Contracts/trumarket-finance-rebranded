@@ -2,8 +2,9 @@
 
 import { useCallback } from 'react';
 import { DealDetails } from '@/types';
-import { calculateAPY } from '@/lib/financialCalculations';
-import { formatCurrency, truncateAddress } from '@/lib/formatters';
+import { calculateAPY, calcYieldFromAPY } from '@/lib/financialCalculations';
+import { calculateDuration } from '@/lib/dealUtils';
+import { formatCurrency, truncateAddress, parseNumericString } from '@/lib/formatters';
 import {
     COLORS,
     TYPOGRAPHY,
@@ -31,7 +32,9 @@ interface InvestmentReviewProps {
     shipment: DealDetails;
     investmentAmount: string;
     onGoBack: () => void;
-    onComplete: () => void;
+    onComplete: () => void | Promise<void>;
+    isLoading?: boolean;
+    error?: string | null;
 }
 
 interface InvestmentCalculations {
@@ -43,18 +46,41 @@ interface InvestmentCalculations {
 }
 
 /**
- * Calculates investment returns for review screen
+ * Calculates investment returns for review screen using compound formula
+ * Formula: TotalReturn = P × (1 + a)^t, where a = APY/100, t = days/365
  */
 const calculateReviewReturns = (
     investmentAmount: string,
-    apy: number
+    apy: number,
+    shipment: DealDetails
 ): InvestmentCalculations => {
-    const investmentValue = parseFloat(investmentAmount.replace(/[^0-9.]/g, '')) || 0;
-    const daysRatio = INVESTMENT.DEAL_DURATION_DAYS / INVESTMENT.DAYS_PER_YEAR;
-    const grossReturns = investmentValue * (apy / 100) * daysRatio;
+    const investmentValue = parseNumericString(investmentAmount);
+
+    // Get start and end dates from shipment
+    const startDate = shipment.shippingStartDate
+        ? new Date(shipment.shippingStartDate)
+        : new Date();
+    const endDate = shipment.expectedShippingEndDate
+        ? new Date(shipment.expectedShippingEndDate)
+        : new Date(Date.now() + INVESTMENT.DEAL_DURATION_DAYS * 24 * 60 * 60 * 1000);
+
+    // Calculate yield and total return using compound formula
+    const { yourYield, totalReturn } = calcYieldFromAPY({
+        principal: investmentValue,
+        apyPercent: apy,
+        startDate,
+        endDate,
+        dayCountBasis: 365,
+    });
+
+    // Calculate management fee (0% currently, but keeping structure for future)
+    const daysRatio = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24) / INVESTMENT.DAYS_PER_YEAR;
     const managementFee = investmentValue * INVESTMENT.MANAGEMENT_FEE_RATE * daysRatio;
+
+    // Gross returns = yield (profit)
+    const grossReturns = yourYield;
     const netReturns = grossReturns - managementFee;
-    const totalAtMaturity = investmentValue + netReturns;
+    const totalAtMaturity = totalReturn - managementFee;
 
     return {
         investmentValue,
@@ -70,18 +96,26 @@ const InvestmentReview: React.FC<InvestmentReviewProps> = ({
     investmentAmount,
     onGoBack,
     onComplete,
+    isLoading = false,
+    error = null,
 }) => {
     const apy = calculateAPY(shipment);
-    const calculations = calculateReviewReturns(investmentAmount, apy);
+    const calculations = calculateReviewReturns(investmentAmount, apy, shipment);
 
-    const handleCopy = useCallback(() => {
-        if (shipment.vaultAddress) {
-            navigator.clipboard.writeText(shipment.vaultAddress);
-        }
-    }, [shipment.vaultAddress]);
+    // Calculate actual deal duration in days using the same utility function as other components
+    const dealDurationDays = shipment.shippingStartDate && shipment.expectedShippingEndDate
+        ? calculateDuration(shipment.shippingStartDate, shipment.expectedShippingEndDate)
+        : INVESTMENT.DEAL_DURATION_DAYS; // Fallback to default if dates are missing
 
-    const handleComplete = useCallback(() => {
-        onComplete();
+    const SMART_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_SAFE_CONTRACT_ADDRESS || '';
+
+    const handleCopy = useCallback(async () => {
+        const { copyToClipboard } = await import('@/lib/clipboard');
+        await copyToClipboard(SMART_CONTRACT_ADDRESS, 'Contract address copied', 'Failed to copy address');
+    }, []);
+
+    const handleComplete = useCallback(async () => {
+        await onComplete();
     }, [onComplete]);
 
     return (
@@ -220,7 +254,7 @@ const InvestmentReview: React.FC<InvestmentReviewProps> = ({
                                 value={`${apy.toFixed(1)}%`}
                                 icon={TrendingUp}
                                 iconColor={COLORS.primary.green}
-                                subtitle={`Over ${INVESTMENT.DEAL_DURATION_DAYS} days`}
+                                subtitle={`Over ${dealDurationDays} days`}
                                 backgroundColor={COLORS.chart.greenLight}
                                 valueColor={COLORS.primary.green}
                                 height="72px"
@@ -348,9 +382,7 @@ const InvestmentReview: React.FC<InvestmentReviewProps> = ({
                                     <span
                                         className="text-xs leading-4 font-normal text-[#62748E] font-mono"
                                     >
-                                        {shipment.vaultAddress
-                                            ? truncateAddress(shipment.vaultAddress, 20, 4)
-                                            : '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb...'}
+                                        {truncateAddress(SMART_CONTRACT_ADDRESS, 20, 4)}
                                     </span>
                                 </div>
                             </div>
@@ -422,10 +454,21 @@ const InvestmentReview: React.FC<InvestmentReviewProps> = ({
                             </Button>
                             <Button
                                 onClick={handleComplete}
-                                className="flex-1 bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-12"
+                                disabled={isLoading}
+                                className="flex-1 bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-12 disabled:opacity-50 disabled:cursor-not-allowed"
                                 style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
                             >
-                                Complete Investment
+                                {isLoading ? (
+                                    <span className="flex items-center gap-2">
+                                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Processing...
+                                    </span>
+                                ) : (
+                                    'Complete Investment'
+                                )}
                             </Button>
                         </div>
 
@@ -435,6 +478,18 @@ const InvestmentReview: React.FC<InvestmentReviewProps> = ({
                             By clicking "Complete Investment", you agree to the terms and conditions
                             of this investment.
                         </p>
+
+                        {/* Error Message */}
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                <div className="text-sm text-red-800 flex items-center gap-2">
+                                    <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                    </svg>
+                                    {error}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

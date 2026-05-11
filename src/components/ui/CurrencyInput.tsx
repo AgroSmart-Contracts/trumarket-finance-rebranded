@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { LucideIcon } from 'lucide-react';
 import { TYPOGRAPHY } from '@/lib/constants';
+import { formatNumber, parseNumericString } from '@/lib/formatters';
 
 interface CurrencyInputProps {
     value: string;
@@ -15,6 +16,7 @@ interface CurrencyInputProps {
 
 /**
  * Reusable currency input component with optional icon
+ * Formats displayed value with commas (###,###) while storing numeric value
  */
 export const CurrencyInput: React.FC<CurrencyInputProps> = ({
     value,
@@ -26,6 +28,20 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
     inputClassName,
     disabled = false,
 }) => {
+    // Parse the numeric value from the stored string
+    const numericValue = parseNumericString(value);
+    
+    // Format for display with commas
+    const displayValue = numericValue > 0 ? formatNumber(numericValue) : '';
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const inputValue = e.target.value;
+        // Remove all non-numeric characters (including commas)
+        const numericString = inputValue.replace(/[^0-9]/g, '');
+        // Update with the numeric string (parent will handle formatting on next render)
+        onChange(numericString);
+    };
+
     return (
         <div className={`relative ${className || ''}`}>
             {Icon && (
@@ -33,8 +49,8 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
             )}
             <input
                 type="text"
-                value={value === '0' ? '' : value}
-                onChange={(e) => onChange(e.target.value)}
+                value={displayValue}
+                onChange={handleChange}
                 placeholder={placeholder}
                 disabled={disabled}
                 className={`w-full ${Icon ? 'pl-12' : 'pl-4'} pr-4 py-4 bg-[#FAFAFA] border border-[#CAD5E2] rounded-md text-2xl leading-7 font-normal text-[#64748B] focus:outline-none focus:border-[#4E8C37] disabled:opacity-50 disabled:cursor-not-allowed ${inputClassName || ''}`}

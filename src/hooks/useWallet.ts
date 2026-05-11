@@ -2,69 +2,57 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { JsonRpcSigner, ethers } from 'ethers';
+import { useWeb3AuthContext } from '@/context/web3-auth-context';
+import { ADAPTER_STATUS } from '@web3auth/base';
 
 import { BlockchainClient } from '@/lib/BlockchainClient';
 import { Wallet } from '@/types/wallet';
 
-const DISCONNECT_FLAG_KEY = 'tm_wallet_disconnected';
-
-const getProvider = () => {
-    if (typeof window === 'undefined' || !window.ethereum) return undefined;
-    return new ethers.BrowserProvider(window.ethereum);
-};
-
 const useWallet = () => {
+    const { web3authSfa, web3authPnPInstance } = useWeb3AuthContext();
 
     const [wallet, setWallet] = useState<Wallet | undefined>();
     const [connectedAddress, setConnectedAddress] = useState<string | undefined>();
     const [signer, setSigner] = useState<JsonRpcSigner | undefined>();
     const [network, setNetwork] = useState<string | undefined>();
 
-    const [isDisconnected, setIsDisconnected] = useState<boolean>(() => {
-        if (typeof window === 'undefined') return false;
-        try {
-            return localStorage.getItem(DISCONNECT_FLAG_KEY) === 'true';
-        } catch {
-            return false;
+    // Get Web3Auth provider
+    const web3AuthProvider = useMemo(() => {
+        if (web3authSfa.provider) {
+            return web3authSfa.provider;
         }
-    });
-
-    const provider = useMemo(() => getProvider(), []);
-
-    const setDisconnectedFlag = useCallback((value: boolean) => {
-        setIsDisconnected(value);
-        if (typeof window !== 'undefined') {
-            try {
-                if (value) {
-                    localStorage.setItem(DISCONNECT_FLAG_KEY, 'true');
-                } else {
-                    localStorage.removeItem(DISCONNECT_FLAG_KEY);
-                }
-            } catch {
-                // ignore storage errors
-            }
+        if (web3authPnPInstance?.status === ADAPTER_STATUS.CONNECTED && web3authPnPInstance.provider) {
+            return web3authPnPInstance.provider;
         }
-    }, []);
+        return null;
+    }, [web3authSfa.provider, web3authPnPInstance?.status, web3authPnPInstance?.provider]);
+
+    // Convert Web3Auth provider to ethers provider
+    const provider = useMemo(() => {
+        if (!web3AuthProvider) return undefined;
+        return new ethers.BrowserProvider(web3AuthProvider as any);
+    }, [web3AuthProvider]);
+
 
     const ensureNetwork = useCallback(async () => {
-        if (typeof window === 'undefined' || !window.ethereum) return;
+        if (!web3AuthProvider) return;
 
         const chainId = process.env.NEXT_PUBLIC_EVM_CHAIN_ID || '0x2105'; // Default to Base mainnet
         if (!chainId) return;
 
         try {
-            await window.ethereum.request({
+            await (web3AuthProvider as any).request({
                 method: 'wallet_switchEthereumChain',
                 params: [{ chainId }],
             });
         } catch (switchError: any) {
             if (switchError?.code === 4902) {
-                console.error('Chain not added to MetaMask');
+                console.error('Chain not added to wallet');
             } else {
                 console.error('Failed to switch network:', switchError);
             }
         }
-    }, []);
+    }, [web3AuthProvider]);
 
     const getNetwork = useCallback(async () => {
         if (!provider) return;
@@ -99,7 +87,8 @@ const useWallet = () => {
 
                 try {
                     const tokenBalance = await new BlockchainClient(
-                        investmentTokenAddress
+                        investmentTokenAddress,
+                        provider
                     ).getBalance(connectedAddress);
 
                     setWallet(prev =>
@@ -121,20 +110,21 @@ const useWallet = () => {
     );
 
     const connectMetaMask = useCallback(async () => {
-        if (typeof window === 'undefined' || !window.ethereum || !provider) {
-            console.log('MetaMask not detected!');
+        if (!web3AuthProvider || !provider) {
             return;
         }
 
         try {
-            // Explicit user intent to connect
-            setDisconnectedFlag(false);
-
             await ensureNetwork();
 
-            await window.ethereum.request({
-                method: 'eth_requestAccounts',
+            // Get accounts from Web3Auth provider
+            const accounts = await (web3AuthProvider as any).request({
+                method: 'eth_accounts',
             });
+
+            if (!accounts || accounts.length === 0) {
+                return;
+            }
 
             const newSigner = await provider.getSigner();
             const addr = await newSigner.getAddress();
@@ -153,28 +143,14 @@ const useWallet = () => {
         } catch (err) {
             console.warn(`did not connect: ${err}`);
         }
-    }, [provider, ensureNetwork, getNetwork, refreshBalances, setDisconnectedFlag]);
+    }, [web3AuthProvider, provider, ensureNetwork, getNetwork, refreshBalances]);
 
     const disconnect = useCallback(async () => {
-        // Try to revoke permissions (MetaMask-specific; ignore if unsupported)
-        if (typeof window !== 'undefined' && window.ethereum) {
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_revokePermissions',
-                    params: [{ eth_accounts: {} }],
-                });
-            } catch (err) {
-                console.warn('Failed to revoke MetaMask permissions', err);
-            }
-        }
-
         setConnectedAddress(undefined);
         setSigner(undefined);
         setWallet(undefined);
         setNetwork(undefined);
-
-        setDisconnectedFlag(true);
-    }, [setDisconnectedFlag]);
+    }, []);
 
     // Refresh balances when address changes
     useEffect(() => {
@@ -190,22 +166,15 @@ const useWallet = () => {
         }
     }, [connectedAddress, refreshBalances]);
 
-    // Auto-connect on load if:
-    // - Not explicitly disconnected
-    // - Wallet is available
+    // Auto-connect on load if Web3Auth is connected
     useEffect(() => {
-        if (
-            isDisconnected ||
-            typeof window === 'undefined' ||
-            !window.ethereum ||
-            !provider
-        ) {
+        if (!web3AuthProvider || !provider) {
             return;
         }
 
         (async () => {
             try {
-                const accounts: string[] = await window.ethereum?.request({
+                const accounts: string[] = await (web3AuthProvider as any).request({
                     method: 'eth_accounts',
                 });
 
@@ -231,81 +200,61 @@ const useWallet = () => {
             }
         })();
     }, [
-        isDisconnected,
+        web3AuthProvider,
         provider,
         ensureNetwork,
         getNetwork,
         refreshBalances,
     ]);
 
-    // Event listeners: chain & account changes
+    // Reconnect when Web3Auth status changes
     useEffect(() => {
-        if (
-            typeof window === 'undefined' ||
-            !window.ethereum ||
-            !provider
-        ) {
+        if (!web3AuthProvider || !provider) {
+            setConnectedAddress(undefined);
+            setSigner(undefined);
+            setWallet(undefined);
             return;
         }
 
-        const { ethereum } = window;
-
-        const handleChainChanged = (chainId: string) => {
-            setNetwork(chainId);
-        };
-
-        const handleAccountsChanged = async (accounts: string[]) => {
-            // If user disconnected from MetaMask UI
-            if (!accounts || accounts.length === 0) {
-                setConnectedAddress(undefined);
-                setSigner(undefined);
-                setWallet(undefined);
-                setDisconnectedFlag(true);
-                return;
-            }
-
+        (async () => {
             try {
-                const newSigner = await provider.getSigner();
-                const addr = await newSigner.getAddress();
-
-                setConnectedAddress(addr);
-                setSigner(newSigner);
-                setWallet({
-                    label: 'Connected Wallet',
-                    address: addr,
-                    balance: 0,
-                    balanceUnderlying: 0,
+                const accounts: string[] = await (web3AuthProvider as any).request({
+                    method: 'eth_accounts',
                 });
-                setDisconnectedFlag(false);
 
-                await refreshBalances();
+                if (accounts && accounts.length) {
+                    const newSigner = await provider.getSigner();
+                    const addr = await newSigner.getAddress();
+
+                    setConnectedAddress(addr);
+                    setSigner(newSigner);
+                    setWallet({
+                        label: 'Connected Wallet',
+                        address: addr,
+                        balance: 0,
+                        balanceUnderlying: 0,
+                    });
+
+                    await getNetwork();
+                    await refreshBalances();
+                }
             } catch (error) {
-                console.error('Error handling accountsChanged', error);
+                console.error('Error handling Web3Auth status change', error);
             }
-        };
-
-        ethereum.on('chainChanged', handleChainChanged);
-        ethereum.on('accountsChanged', handleAccountsChanged);
-
-        return () => {
-            ethereum.removeListener('chainChanged', handleChainChanged);
-            ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        };
-    }, [provider, refreshBalances, setDisconnectedFlag]);
+        })();
+    }, [web3AuthProvider, provider, getNetwork, refreshBalances]);
 
     // Always return a consistent shape
     if (!provider) {
         return {
             wallet,
             signer,
-            connectMetaMask: async () => {
-                console.log('MetaMask not detected!');
-            },
+            connectMetaMask: async () => { },
             disconnect: async () => { },
             refreshBalances: async () => { },
             network,
             ensureNetwork: async () => { },
-            error: 'MetaMask not detected!',
+            error: 'Web3Auth wallet not connected!',
         };
     }
 

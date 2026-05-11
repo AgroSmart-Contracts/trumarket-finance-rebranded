@@ -18,6 +18,7 @@ interface MetricCardProps {
     sparkline?: React.ReactNode;
     className?: string;
     width?: string;
+    /** Fixed card height; omit for compact content-sized cards */
     height?: string;
 }
 
@@ -34,26 +35,26 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     sparkline,
     className,
     width,
-    height = '230px',
+    height,
 }) => {
     return (
         <InfoCard
-            className={cn('p-4 sm:p-6 pb-1 w-full', className)}
-            style={{ height, maxWidth: width }}
+            className={cn('flex h-full min-h-0 w-full flex-col p-3 sm:p-4', className)}
+            style={{ maxWidth: width, ...(height ? { height } : {}) }}
         >
-            <div className="flex flex-col gap-4">
+            <div className="flex min-h-0 flex-1 flex-col gap-2">
                 {/* Icon and Change Badge */}
-                <div className="flex items-start justify-between">
+                <div className="flex shrink-0 items-start justify-between gap-2">
                     <IconContainer
                         icon={icon}
                         iconColor={iconColor}
                         backgroundColor={iconBackgroundColor}
-                        size="md"
+                        size="sm"
                     />
                     {change && (
                         <span
                             className={cn(
-                                'px-2 py-1 rounded text-sm font-normal',
+                                'rounded px-1.5 py-0.5 text-[11px] font-medium leading-tight',
                                 change.isPositive
                                     ? 'bg-[#ECFDF5] text-[#4E8C37]'
                                     : 'bg-red-50 text-red-600'
@@ -64,24 +65,22 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                     )}
                 </div>
 
-                {/* Value */}
-                <div>
-                    <div
-                        className="text-[30px] leading-9 font-normal text-[#0F172B]"
-                        style={{ letterSpacing: '0.395508px' }}
-                    >
+                <div className="shrink-0">
+                    <div className="text-2xl font-semibold leading-tight tracking-tight text-[#0F172B] sm:text-3xl">
                         {value}
                     </div>
                     <div
-                        className="text-sm leading-5 font-normal text-[#62748E]"
+                        className="mt-0.5 text-[11px] leading-4 font-normal text-[#62748E]"
                         style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tighter }}
                     >
                         {label}
                     </div>
                 </div>
 
-                {/* Sparkline */}
-                {sparkline && <div className="mt-auto">{sparkline}</div>}
+                {/* Same bottom band as <Sparkline /> so row heights match when sparkline is omitted */}
+                <div className="mt-auto shrink-0 pt-0.5">
+                    {sparkline ?? <div className="h-8" aria-hidden />}
+                </div>
             </div>
         </InfoCard>
     );

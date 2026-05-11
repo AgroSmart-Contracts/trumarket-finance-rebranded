@@ -1,11 +1,13 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
+import { Wallet } from 'lucide-react';
+import { useAccount, useReadContract } from 'wagmi';
+import { erc20Abi, formatUnits } from 'viem';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { DealDetails } from '@/types';
-import { InfoCard, SectionHeader, DealTermRow, RiskBadge } from '@/components/ui';
+import { InfoCard, SectionHeader, DealTermRow, RiskBadge, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui';
 import { formatCurrency } from '@/lib/formatters';
-import { calculateInvestmentLimits, getDealRisk } from '@/lib/financialCalculations';
-import { COLORS, TYPOGRAPHY } from '@/lib/constants';
-import useWallet from '@/hooks/useWallet';
-import useDealOwnership from '@/hooks/useDealOwnership';
+import { calculateInvestmentLimits, getDealRisk, calcYieldFromAPY } from '@/lib/financialCalculations';
+import { COLORS, TYPOGRAPHY, INVESTMENT } from '@/lib/constants';
 
 interface FinancialInformationCardProps {
     apy: number;
@@ -62,37 +64,25 @@ const MetricItem: React.FC<MetricItemProps> = ({ label, value, isPositive = fals
     </div>
 );
 
-/**
- * Calculate YEARFRAC (fractional years between two dates)
- * Convention 1 = Actual/Actual (actual days / actual days in year)
- */
-const calculateYEARFRAC = (startDate: Date, endDate: Date, convention: number = 1): number => {
-    if (convention === 1) {
-        // Actual/Actual: actual days / actual days in year
-        const diffTime = endDate.getTime() - startDate.getTime();
-        const diffDays = diffTime / (1000 * 60 * 60 * 24);
-
-        // Calculate actual days in the year containing the start date
-        const startYear = startDate.getFullYear();
-        const isLeapYear = (year: number) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-        const daysInYear = isLeapYear(startYear) ? 366 : 365;
-
-        return diffDays / daysInYear;
-    }
-    return 0;
-};
-
 export const FinancialInformationCard: React.FC<FinancialInformationCardProps> = ({ apy, shipment }) => {
-    // Wallet and position hooks
-    const { wallet } = useWallet();
-    const { shares, refresh } = useDealOwnership(shipment.vaultAddress || '', shipment.nftID || 0);
+    const { address, isConnected } = useAccount();
+    const tokenAddress = (process.env.NEXT_PUBLIC_INVESTMENT_TOKEN_CONTRACT_ADDRESS || '') as `0x${string}`;
+    const tokenDecimals = Number(process.env.NEXT_PUBLIC_INVESTMENT_TOKEN_DECIMALS || '6');
 
-    // Refresh position when wallet connects or shipment changes
-    useEffect(() => {
-        if (wallet?.address && shipment.vaultAddress) {
-            refresh();
-        }
-    }, [wallet?.address, shipment.vaultAddress, refresh]);
+    const { data: tokenBalanceRaw } = useReadContract({
+        address: tokenAddress || undefined,
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: address ? [address] : undefined,
+        query: {
+            enabled: Boolean(isConnected && address && tokenAddress),
+        },
+    });
+
+    const walletBalanceUnderlying = useMemo(() => {
+        if (tokenBalanceRaw == null) return 0;
+        return Number(formatUnits(tokenBalanceRaw, tokenDecimals));
+    }, [tokenBalanceRaw, tokenDecimals]);
 
     // Use actual data from shipment
     const principalInvested = shipment.investmentAmount || 0;
@@ -100,51 +90,49 @@ export const FinancialInformationCard: React.FC<FinancialInformationCardProps> =
     const principalRequired = shipment.liquidityPoolSize || shipment.investmentAmount || 0;
     const risk = useMemo(() => getDealRisk(shipment), [shipment]);
 
-    // Calculate user's position (convert shares to assets)
-    const userPosition = useMemo(() => {
-        if (!wallet?.address || !shares || shares === 0) return 0;
-        return shares; // shares is already in USDC format from useDealOwnership
-    }, [wallet?.address, shares]);
-
-    // Calculate yield based on position and APY using YEARFRAC
-    const yieldAmount = useMemo(() => {
-        if (!wallet?.address || !userPosition || userPosition === 0 || !apy) return 0;
-
-        // Use shipping start date as the start date, or current date if not available
-        const startDate = shipment.shippingStartDate
-            ? new Date(shipment.shippingStartDate)
-            : new Date();
-        const today = new Date();
-
-        // Calculate fractional years using YEARFRAC (convention 1 = Actual/Actual)
-        const yearFrac = calculateYEARFRAC(startDate, today, 1);
-
-        // Yield = position * (apy / 100) * YEARFRAC
-        // This gives the total yield earned so far
-        return userPosition * (apy / 100) * yearFrac;
-    }, [wallet?.address, userPosition, apy, shipment.shippingStartDate]);
-
     // Calculate investment limits using utility function
     const { min: minInvestment, max: maxInvestment } = useMemo(
         () => calculateInvestmentLimits(principalInvested),
         [principalInvested]
     );
 
-    // Total return is principal + revenue, or use a calculated total if available
-    const totalReturnAmount = useMemo(
-        () => Math.max(principalInvested + revenue, principalInvested * (1 + apy / 100)) || principalInvested || 1,
-        [principalInvested, revenue, apy]
-    );
+    // Total return amount (principal + profit), calculated using APY and actual deal duration
+    const totalReturnAmount = useMemo(() => {
+        if (principalInvested <= 0 || !apy) return principalInvested || 0;
+
+        // Use deal dates when available to determine duration
+        const startDate = shipment.shippingStartDate
+            ? new Date(shipment.shippingStartDate)
+            : new Date();
+        const endDate = shipment.expectedShippingEndDate
+            ? new Date(shipment.expectedShippingEndDate)
+            : new Date(startDate.getTime() + INVESTMENT.DEAL_DURATION_DAYS * 24 * 60 * 60 * 1000);
+
+        // If endDate is not after startDate, fall back to configured deal duration
+        const hasValidDates = endDate.getTime() > startDate.getTime();
+        const effectiveEndDate = hasValidDates
+            ? endDate
+            : new Date(startDate.getTime() + INVESTMENT.DEAL_DURATION_DAYS * 24 * 60 * 60 * 1000);
+
+        const { totalReturn } = calcYieldFromAPY({
+            principal: principalInvested,
+            apyPercent: apy,
+            startDate,
+            endDate: effectiveEndDate,
+            dayCountBasis: 365,
+        });
+
+        return totalReturn;
+    }, [principalInvested, apy, shipment.shippingStartDate, shipment.expectedShippingEndDate]);
 
     // Prevent division by zero in chart calculations
     const safeTotal = useMemo(() => (totalReturnAmount > 0 ? totalReturnAmount : 1), [totalReturnAmount]);
 
     const calculateCircumference = (radius: number) => 2 * Math.PI * radius;
 
-    return (
-        <InfoCard style={{ padding: '25px 25px 25px', gap: '24px' }}>
-            <SectionHeader as="h2">Financial Information</SectionHeader>
-
+    // Render Overview Content (shared between mobile tabs and desktop)
+    const renderOverviewContent = () => (
+        <>
             {/* Doughnut Chart Section */}
             <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-[70px]">
                 <div className="relative w-[200px] h-[200px] sm:w-[227px] sm:h-[227px] flex items-center justify-center flex-shrink-0">
@@ -250,30 +238,7 @@ export const FinancialInformationCard: React.FC<FinancialInformationCardProps> =
             </div>
 
             {/* Deal Terms */}
-            <div className="pt-[17px] border-t border-[#E2E8F0] flex flex-col gap-4">
-                {/* <DealTermRow
-                    label="Payment Structure"
-                    value="Quarterly interest payments with principal at maturity"
-                />
-                <DealTermRow label="Management Fee" value="0% annually" />
-                <DealTermRow label="Performance Fee" value="0%" /> */}
-
-                {/* User Position - Only shown if wallet is connected */}
-                {wallet?.address && (
-                    <DealTermRow
-                        label="Your Position"
-                        value={formatCurrency(userPosition)}
-                    />
-                )}
-
-                {/* Yield - Only shown if wallet is connected and has position */}
-                {wallet?.address && (
-                    <DealTermRow
-                        label="Your Yield"
-                        value={formatCurrency(yieldAmount)}
-                    />
-                )}
-
+            <div className="pt-[17px] border-t border-[#E2E8F0] flex flex-col gap-4 mt-6">
                 <DealTermRow
                     label="Min Investment"
                     value={formatCurrency(minInvestment)}
@@ -286,7 +251,7 @@ export const FinancialInformationCard: React.FC<FinancialInformationCardProps> =
 
             {/* Historical Performance */}
             {shipment.roi !== undefined && (
-                <div className="pt-[25px] border-t border-[#E2E8F0] flex flex-col gap-4">
+                <div className="pt-[25px] border-t border-[#E2E8F0] flex flex-col gap-4 mt-6">
                     <SectionHeader>Historical Performance</SectionHeader>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         <MetricItem
@@ -310,6 +275,72 @@ export const FinancialInformationCard: React.FC<FinancialInformationCardProps> =
                     </div>
                 </div>
             )}
+        </>
+    );
+
+    return (
+        <InfoCard style={{ padding: '25px 25px 25px', gap: '24px' }}>
+            <SectionHeader as="h2">Financial Information</SectionHeader>
+
+            {/* Mobile: Tabs Navigation */}
+            <Tabs defaultValue="overview" className="w-full lg:hidden">
+                <TabsList className="w-full justify-start">
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="your-info">Your info</TabsTrigger>
+                </TabsList>
+
+                {/* Overview Tab Content - Mobile */}
+                <TabsContent value="overview" className="mt-6">
+                    {renderOverviewContent()}
+                </TabsContent>
+
+                {/* Your Info Tab Content - Mobile (matches desktop design) */}
+                {!isConnected ? (
+                    <TabsContent value="your-info" className="mt-6">
+                        <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+                            <p
+                                className="mb-4 max-w-sm text-sm font-normal leading-5 text-[#62748E]"
+                                style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tighter }}
+                            >
+                                Connect your wallet to view your balance and personal information for this deal.
+                            </p>
+                            <ConnectButton chainStatus="icon" showBalance={false} />
+                        </div>
+                    </TabsContent>
+                ) : (
+                    <TabsContent value="your-info" className="mt-6">
+                        <div className="flex flex-col gap-4">
+                            {/* Wallet Balance Section */}
+                            <div className="flex flex-col pb-4 border-b border-[#E2E8F0]">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-[#F1F5F9] rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <Wallet className="w-5 h-5 text-[#62748E]" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span
+                                            className="text-sm leading-5 font-normal text-[#45556C]"
+                                            style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tighter }}
+                                        >
+                                            Wallet balance
+                                        </span>
+                                        <span
+                                            className="text-base leading-5 font-normal text-[#0F172B]"
+                                            style={{ letterSpacing: TYPOGRAPHY.letterSpacing.tight }}
+                                        >
+                                            {formatCurrency(walletBalanceUnderlying)} USDC
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </TabsContent>
+                )}
+            </Tabs>
+
+            {/* Desktop: Show Overview content directly without tabs */}
+            <div className="hidden lg:block">
+                {renderOverviewContent()}
+            </div>
         </InfoCard>
     );
 };

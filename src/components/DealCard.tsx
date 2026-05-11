@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DealDetails } from '@/types';
@@ -57,7 +58,8 @@ export default function DealCard({ deal }: DealCardProps) {
   const colorIndex = deal.id ? parseInt(deal.id.slice(-1)) || 0 : 0;
 
   return (
-    <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-gray-300 h-full flex flex-col hover:bg-gray-50">
+    <Link href={`/shipments/${deal.id}`} className="block h-full">
+      <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer border-gray-300 h-full flex flex-col hover:bg-gray-50">
       {/* Mobile Layout - Inspired by trumarket-home-next */}
       <div className="block md:hidden h-full flex flex-col px-4 py-6">
         {/* Top Section: Product Badge and APY */}
@@ -160,6 +162,7 @@ export default function DealCard({ deal }: DealCardProps) {
         </CardContent>
       </div>
     </Card>
+    </Link>
   );
 }
 

@@ -17,6 +17,7 @@ interface InvestmentCalculations {
 interface InvestmentSummaryCardProps {
     apy: number;
     calculations: InvestmentCalculations;
+    dealDurationDays?: number; // Actual deal duration in days
 }
 
 interface SummaryRowProps {
@@ -73,7 +74,9 @@ const SummaryRow: React.FC<SummaryRowProps> = ({
     );
 };
 
-export const InvestmentSummaryCard: React.FC<InvestmentSummaryCardProps> = ({ apy, calculations }) => {
+export const InvestmentSummaryCard: React.FC<InvestmentSummaryCardProps> = ({ apy, calculations, dealDurationDays }) => {
+    // Use actual deal duration if provided, otherwise fall back to default
+    const durationDays = dealDurationDays ?? INVESTMENT.DEAL_DURATION_DAYS;
     return (
         <InfoCard style={{ padding: '25px 25px 25px', gap: '24px' }}>
             <SectionHeader>Investment Summary</SectionHeader>
@@ -87,7 +90,7 @@ export const InvestmentSummaryCard: React.FC<InvestmentSummaryCardProps> = ({ ap
                 <SummaryRow
                     label="Estimated Returns"
                     value={formatCurrency(calculations.estimatedReturns)}
-                    subtitle={`@ ${apy.toFixed(1)}% APY over ${INVESTMENT.DEAL_DURATION_DAYS} days`}
+                    subtitle={`@ ${apy.toFixed(1)}% APY over ${durationDays} days`}
                     backgroundColor={COLORS.chart.greenLight}
                     valueColor={COLORS.primary.green}
                 />
@@ -148,5 +151,4 @@ export const InvestmentSummaryCard: React.FC<InvestmentSummaryCardProps> = ({ ap
         </InfoCard>
     );
 };
-
 

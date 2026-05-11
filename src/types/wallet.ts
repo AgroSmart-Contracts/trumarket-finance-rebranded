@@ -7,11 +7,8 @@ export type Wallet = {
 
 declare global {
     interface Window {
-        ethereum?: {
-            request: (args: { method: string; params?: any[] }) => Promise<any>;
-            on: (event: string, callback: (...args: any[]) => void) => void;
-            removeListener: (event: string, callback: (...args: any[]) => void) => void;
-        };
+        /** EIP-1193 provider; narrowed shape conflicts with other global augmentations (e.g. wagmi/viem). */
+        ethereum?: any;
     }
 }
 

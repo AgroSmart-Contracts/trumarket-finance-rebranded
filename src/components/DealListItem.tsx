@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { DealDetails } from '@/types';
 import { calculateAPY, getDealRisk } from '@/lib/financialCalculations';
 import { formatCurrency } from '@/lib/formatters';
@@ -11,13 +12,13 @@ import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { MetricDisplay } from '@/components/ui/MetricDisplay';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { formatDateShort } from '@/lib/dateUtils';
 
 interface DealListItemProps {
     deal: DealDetails;
-    onClick: () => void;
 }
 
-export default function DealListItem({ deal, onClick }: DealListItemProps) {
+export default function DealListItem({ deal }: DealListItemProps) {
     const apy = calculateAPY(deal);
     const risk = getDealRisk(deal);
 
@@ -28,56 +29,57 @@ export default function DealListItem({ deal, onClick }: DealListItemProps) {
         "bg-purple-100 text-purple-600"
     ];
     const colorIndex = deal.id ? parseInt(deal.id.slice(-1)) || 0 : 0;
-
+    const dealUrl = `/shipments/${deal.id}`;
 
     return (
         <div
-            onClick={onClick}
-            className="bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-all duration-300 cursor-pointer hover:border-[#4E8C37] group hover:bg-gray-50"
+            className="bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-all duration-300 hover:border-[#4E8C37] group hover:bg-gray-50"
         >
             {/* Mobile Layout - Inspired by trumarket-home-next */}
-            <div className="block md:hidden px-4 py-6">
-                {/* Top Section: Product Badge and APY */}
-                <div className="flex items-center justify-between mb-4 gap-3">
-                    <span className={`text-sm rounded-lg px-3 py-1 font-semibold ${colorClasses[colorIndex % colorClasses.length]}`}>
-                        {deal.name}
-                    </span>
-                    <span className="text-sm text-gray-800 font-semibold whitespace-nowrap">
-                        {apy.toFixed(2)}% APY
-                    </span>
-                </div>
-
-                {/* Route Section */}
-                <div className="flex flex-row items-center space-x-1 mb-2">
-                    <h4 className="text-base font-semibold text-gray-900">
-                        {deal.origin}
-                    </h4>
-                    <ArrowRight className="w-4 h-4 text-gray-600" />
-                    <h4 className="text-base font-semibold text-gray-900">
-                        {deal.destination}
-                    </h4>
-                </div>
-
-                {/* Description */}
-                {deal.description && deal.description !== 'N/A' && (
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                        {deal.description}
-                    </p>
-                )}
-
-                {/* Bottom Section: Investment Amount and Status */}
-                <div className="flex flex-row justify-between items-center mt-auto pt-2">
-                    <div className="text-lg font-bold text-gray-900">
-                        {formatCurrency(deal.investmentAmount)}
+            <Link href={dealUrl} className="block md:hidden cursor-pointer">
+                <div className="px-4 py-6">
+                    {/* Top Section: Product Badge and APY */}
+                    <div className="flex items-center justify-between mb-4 gap-3">
+                        <span className={`text-sm rounded-lg px-3 py-1 font-semibold ${colorClasses[colorIndex % colorClasses.length]}`}>
+                            {deal.name}
+                        </span>
+                        <span className="text-sm text-gray-800 font-semibold whitespace-nowrap">
+                            {apy.toFixed(2)}% APY
+                        </span>
                     </div>
-                    <div className="flex flex-row space-x-2 items-center">
-                        <CircleCheckBig className="w-5 h-5 text-[#4E8C37]" />
-                        <p className="text-sm font-semibold text-[#4E8C37]">
-                            {getStatusLabel(deal.status, deal.currentMilestone || 0)}
+
+                    {/* Route Section */}
+                    <div className="flex flex-row items-center space-x-1 mb-2">
+                        <h4 className="text-base font-semibold text-gray-900">
+                            {deal.origin}
+                        </h4>
+                        <ArrowRight className="w-4 h-4 text-gray-600" />
+                        <h4 className="text-base font-semibold text-gray-900">
+                            {deal.destination}
+                        </h4>
+                    </div>
+
+                    {/* Description */}
+                    {deal.description && deal.description !== 'N/A' && (
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                            {deal.description}
                         </p>
+                    )}
+
+                    {/* Bottom Section: Investment Amount and Status */}
+                    <div className="flex flex-row justify-between items-center mt-auto pt-2">
+                        <div className="text-lg font-bold text-gray-900">
+                            {formatCurrency(deal.investmentAmount)}
+                        </div>
+                        <div className="flex flex-row space-x-2 items-center">
+                            <CircleCheckBig className="w-5 h-5 text-[#4E8C37]" />
+                            <p className="text-sm font-semibold text-[#4E8C37]">
+                                {getStatusLabel(deal.status, deal.currentMilestone || 0)}
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </Link>
 
             {/* Desktop Layout */}
             <div className="hidden md:block bg-white border border-[#E2E8F0] rounded-lg shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] p-[20px] flex flex-col gap-4">
@@ -91,29 +93,16 @@ export default function DealListItem({ deal, onClick }: DealListItemProps) {
                         <RiskBadge risk={risk} />
                     </div>
                     <div className="flex gap-2 w-full sm:w-auto">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onClick();
-                            }}
-                            className="bg-[#FAFAFA] border border-[#CAD5E2] text-[#314158] hover:bg-gray-50 rounded-md h-9"
-                            style={{ letterSpacing: '-0.3125px' }}
-                        >
-                            View Details
-                        </Button>
-                        <Button
-                            size="sm"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onClick();
-                            }}
-                            className="bg-[#4E8C37] hover:bg-[#3A6A28] text-white rounded-md h-9"
-                            style={{ letterSpacing: '-0.3125px' }}
-                        >
-                            Manage
-                        </Button>
+                        <Link href={dealUrl}>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-[#FAFAFA] border border-[#CAD5E2] text-[#314158] hover:bg-gray-50 rounded-md h-9"
+                                style={{ letterSpacing: '-0.3125px' }}
+                            >
+                                View Details
+                            </Button>
+                        </Link>
                     </div>
                 </div>
 
@@ -144,7 +133,7 @@ export default function DealListItem({ deal, onClick }: DealListItemProps) {
                     />
                     <MetricDisplay
                         label="Maturity"
-                        value="Mar 15, 2026"
+                        value={deal.expectedShippingEndDate ? formatDateShort(deal.expectedShippingEndDate) : 'TBD'}
                         icon={Calendar}
                         iconColor="#4E8C37"
                         iconBackgroundColor="#ECFDF5"
@@ -153,18 +142,37 @@ export default function DealListItem({ deal, onClick }: DealListItemProps) {
                 </div>
 
                 {/* Progress Bar for In Progress deals */}
-                {getStatusLabel(deal.status, deal.currentMilestone || 0) === 'In Progress' && (
+                {getStatusLabel(deal.status, deal.currentMilestone || 0) === 'In Progress' && deal.milestones && deal.milestones.length > 0 && (
                     <div className="pt-[17px] border-t border-[#F1F5F9]">
+                        {/*
+                          Progress is based on currentMilestone index over total milestones.
+                          This makes the bar reflect the real deal data instead of a fixed 65%.
+                        */}
+                        {(() => {
+                            const totalMilestones = deal.milestones.length;
+                            const currentIndex = Math.min(
+                                Math.max(deal.currentMilestone || 0, 0),
+                                totalMilestones - 1
+                            );
+                            const progress =
+                                totalMilestones > 0
+                                    ? Math.round(((currentIndex + 1) / totalMilestones) * 100)
+                                    : 0;
+                            const milestoneLabel =
+                                deal.milestones[currentIndex]?.description || 'Deal Progress';
+
+                            return (
                         <ProgressBar
-                            progress={65}
-                            label="Deal Progress: Stored at Destination"
-                            showPercentage
-                            showIndicator
-                        />
+                                progress={progress}
+                                label={`Deal Progress: ${milestoneLabel}`}
+                                showPercentage
+                                showIndicator
+                            />
+                            );
+                        })()}
                     </div>
                 )}
             </div>
         </div>
     );
 }
-

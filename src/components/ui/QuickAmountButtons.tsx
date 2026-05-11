@@ -44,12 +44,12 @@ export const QuickAmountButtons: React.FC<QuickAmountButtonsProps> = ({
             return `Min: ${formatCurrency(amount)}`;
         }
 
-        // Format large amounts
+        // Format large amounts (no decimals)
         if (amount >= 1000000) {
-            return `$${(amount / 1000000).toFixed(0)}M`;
+            return `$${Math.round(amount / 1000000)}M`;
         }
 
-        return `$${(amount / 1000).toFixed(0)}K`;
+        return `$${Math.round(amount / 1000)}K`;
     };
 
     return (

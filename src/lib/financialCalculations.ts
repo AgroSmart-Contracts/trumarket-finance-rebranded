@@ -1,4 +1,5 @@
 import { DealDetails } from '@/types';
+import { INVESTMENT } from './constants';
 
 /**
  * FINANCIAL CALCULATIONS
@@ -116,8 +117,6 @@ export function calculatePortfolioMetrics(deals: DealDetails[]) {
     };
 }
 
-import { INVESTMENT } from './constants';
-
 /**
  * Calculate investment limits based on deal amount
  * Min investment is 10% of deal amount, max is 100% of deal amount
@@ -130,17 +129,37 @@ export function calculateInvestmentLimits(dealAmount: number): { min: number; ma
 }
 
 /**
+ * Calculate YEARFRAC (fractional years between two dates)
+ * Convention 1 = Actual/Actual (actual days / actual days in year)
+ */
+export function calculateYEARFRAC(startDate: Date, endDate: Date, convention: number = 1): number {
+    if (convention === 1) {
+        // Actual/Actual: actual days / actual days in year
+        const diffTime = endDate.getTime() - startDate.getTime();
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+        // Calculate actual days in the year containing the start date
+        const startYear = startDate.getFullYear();
+        const isLeapYear = (year: number) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        const daysInYear = isLeapYear(startYear) ? 366 : 365;
+
+        return diffDays / daysInYear;
+    }
+    return 0;
+}
+
+/**
  * Calculate risk level based on APY percentage
- * Low risk: 0-7%
- * Medium risk: 8-13%
- * High risk: >=14%
+ * Low risk (A): 0-10% (inclusive)
+ * Medium risk: 11-13% (inclusive)
+ * High risk: 14-15% (inclusive)
  */
 export function calculateRiskFromAPY(deal: DealDetails): 'low' | 'medium' | 'high' {
     const apy = calculateAPY(deal);
 
-    if (apy >= 0 && apy <= 7) {
+    if (apy >= 0 && apy <= 10) {
         return 'low';
-    } else if (apy >= 8 && apy <= 13) {
+    } else if (apy >= 11 && apy <= 13) {
         return 'medium';
     } else {
         return 'high';
@@ -160,3 +179,58 @@ export function getDealRisk(deal: DealDetails): 'low' | 'medium' | 'high' {
     return calculateRiskFromAPY(deal);
 }
 
+// NOTE: calcYieldFromAPY is defined once above. Duplicate definitions were removed to avoid build errors.
+
+/**
+ * Calculate yield and total return using compound APY formula
+ * 
+ * Formula:
+ * - t = days / 365 (time in years)
+ * - a = APY% / 100 (APY as decimal)
+ * - TotalReturn = P × (1 + a)^t
+ * - YourYield = TotalReturn - P
+ * 
+ * @param principal - Investment amount (P)
+ * @param apyPercent - APY percentage (e.g., 10 for 10%)
+ * @param startDate - Deal start date
+ * @param endDate - Deal end date (or current date for "yield so far")
+ * @param dayCountBasis - Days per year (default 365)
+ * @returns Object with days, tYears, yourYield, and totalReturn
+ */
+export function calcYieldFromAPY(params: {
+    principal: number;
+    apyPercent: number;
+    startDate: Date | string;
+    endDate: Date | string;
+    dayCountBasis?: 365 | 360;
+}): {
+    days: number;
+    tYears: number;
+    yourYield: number;
+    totalReturn: number;
+} {
+    const {
+        principal: P,
+        apyPercent,
+        startDate,
+        endDate,
+        dayCountBasis = 365,
+    } = params;
+
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+
+    const msPerDay = 86_400_000;
+    const days = Math.max(0, (end - start) / msPerDay);
+    const t = days / dayCountBasis;
+
+    const a = apyPercent / 100;
+
+    // Compound formula: TotalReturn = P × (1 + a)^t
+    const totalReturn = P * Math.pow(1 + a, t);
+
+    // Yield = TotalReturn - Principal
+    const yourYield = totalReturn - P;
+
+    return { days, tYears: t, yourYield, totalReturn };
+}

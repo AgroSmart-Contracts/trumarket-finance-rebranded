@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DealDetails } from '@/types';
 import { calculateAPY } from '@/lib/financialCalculations';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency, parseNumericString } from '@/lib/formatters';
 import {
     COLORS,
     TYPOGRAPHY,
@@ -46,7 +46,7 @@ const InvestmentSuccess: React.FC<InvestmentSuccessProps> = ({
 }) => {
     const router = useRouter();
     const apy = calculateAPY(shipment);
-    const investmentValue = parseFloat(investmentAmount.replace(/[^0-9.]/g, '')) || 0;
+    const investmentValue = parseNumericString(investmentAmount);
     const confirmationId = confirmationNumber || generateConfirmationNumber();
 
     const handleReturnToDashboard = useCallback(() => {

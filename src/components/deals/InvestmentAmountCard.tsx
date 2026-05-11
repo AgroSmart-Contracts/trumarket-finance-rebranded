@@ -4,7 +4,7 @@ import { DealDetails } from '@/types';
 import { InfoCard, SectionHeader, QuickAmountButtons, CurrencyInput, InvestmentInfoDisplay } from '@/components/ui';
 import { calculateInvestmentLimits } from '@/lib/financialCalculations';
 import { INVESTMENT, TYPOGRAPHY } from '@/lib/constants';
-import useWallet from '@/hooks/useWallet';
+import { useWalletContext } from '@/context/wallet-context';
 
 interface InvestmentAmountCardProps {
     investmentAmount: string;
@@ -19,8 +19,8 @@ export const InvestmentAmountCard: React.FC<InvestmentAmountCardProps> = ({
     onQuickAmount,
     shipment,
 }) => {
-    // Get wallet connection status and balance
-    const { wallet } = useWallet();
+    // Get wallet connection status and balance from shared context
+    const { wallet } = useWalletContext();
 
     // Calculate min and max investment based on deal amount
     const { min: minInvestment, max: maxInvestment } = useMemo(

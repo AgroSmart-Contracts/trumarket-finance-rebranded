@@ -9,20 +9,20 @@ interface SparklineProps {
     path?: string;
 }
 
-const defaultPath = 'M 0 40 L 25 35 L 50 30 L 75 25 L 100 20 L 125 15 L 150 10 L 175 8 L 200 5';
+const defaultPath = 'M 0 26 L 32 22 L 64 17 L 96 12 L 128 8 L 160 4';
 
 /**
  * Reusable sparkline component for metric cards
  */
 export const Sparkline: React.FC<SparklineProps> = ({
     color = '#4E8C37',
-    width = 200,
-    height = 48,
+    width = 160,
+    height = 32,
     className,
     path = defaultPath,
 }) => {
     return (
-        <div className={cn('w-[200px] h-12 -ml-4', className)}>
+        <div className={cn('h-8 w-[160px] -ml-2', className)}>
             <svg
                 width={width}
                 height={height}
@@ -32,7 +32,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
                 <path
                     d={path}
                     stroke={color}
-                    strokeWidth="2"
+                    strokeWidth="1.5"
                     fill="none"
                 />
             </svg>

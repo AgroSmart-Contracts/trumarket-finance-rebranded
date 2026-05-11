@@ -1,8 +1,10 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { ethers, formatUnits, parseEther, parseUnits } from 'ethers';
-import useWallet from './useWallet';
+import { ethers, formatUnits, parseUnits } from 'ethers';
+import { useWalletContext } from '@/context/wallet-context';
+import { useWeb3AuthContext } from '@/context/web3-auth-context';
+import { ADAPTER_STATUS } from '@web3auth/base';
 import DealVaultAbi from '@/lib/abis/DealVault.abi';
 import ERC20Abi from '@/lib/abis/ERC20.abi';
 import DealsManagerAbi from '@/lib/abis/DealsManager.abi';
@@ -11,15 +13,23 @@ const useDealOwnership = (vaultAddress: string, nftID: number) => {
     const [amountToReclaim, setAmountToReclaim] = useState<number>(0);
     const [amountFunded, setAmountFunded] = useState<number>(0);
     const [dealStatus, setDealStatus] = useState<number>(0);
-    const { signer } = useWallet();
+    const { signer } = useWalletContext();
+    const { web3authSfa, web3authPnPInstance } = useWeb3AuthContext();
 
     const refresh = useCallback(async () => {
         const dealsManagerAddress = process.env.NEXT_PUBLIC_DEALS_MANAGER_ADDRESS;
         const decimals = process.env.NEXT_PUBLIC_INVESTMENT_TOKEN_DECIMALS || '6';
 
-        if (vaultAddress && signer && window.ethereum && dealsManagerAddress) {
+        // Get Web3Auth provider
+        const web3AuthProvider = web3authSfa.provider
+            ? web3authSfa.provider
+            : web3authPnPInstance?.status === ADAPTER_STATUS.CONNECTED && web3authPnPInstance.provider
+                ? web3authPnPInstance.provider
+                : null;
+
+        if (vaultAddress && signer && web3AuthProvider && dealsManagerAddress) {
             try {
-                const provider = new ethers.BrowserProvider(window.ethereum);
+                const provider = new ethers.BrowserProvider(web3AuthProvider as any);
                 const manager = new ethers.Contract(
                     dealsManagerAddress,
                     DealsManagerAbi,
@@ -32,7 +42,6 @@ const useDealOwnership = (vaultAddress: string, nftID: number) => {
                     .maxRedeem(signer.address)
                     .then((shares: bigint) => {
                         const formatted = +formatUnits(shares, Number(decimals));
-                        console.log('🔍 Vault shares:', shares.toString(), '→', formatted);
                         setShares(formatted);
                     })
                     .catch(console.error);
@@ -42,7 +51,6 @@ const useDealOwnership = (vaultAddress: string, nftID: number) => {
                     .totalAssets()
                     .then((balance: bigint) => {
                         const formatted = +formatUnits(balance, Number(decimals));
-                        console.log('🔍 Total vault assets:', balance.toString(), '→', formatted);
                         setAmountFunded(formatted);
                     })
                     .catch(console.error);
@@ -52,7 +60,6 @@ const useDealOwnership = (vaultAddress: string, nftID: number) => {
                     .maxWithdraw(signer.address)
                     .then((amount: bigint) => {
                         const formatted = +formatUnits(amount, Number(decimals));
-                        console.log('🔍 Amount to reclaim:', amount.toString(), '→', formatted);
                         setAmountToReclaim(formatted);
                     })
                     .catch(console.error);
@@ -61,7 +68,6 @@ const useDealOwnership = (vaultAddress: string, nftID: number) => {
                 manager
                     .status(nftID)
                     .then((status: bigint) => {
-                        console.log('🔍 Deal status:', status.toString());
                         setDealStatus(Number(status.toString()));
                     })
                     .catch(console.error);
@@ -69,13 +75,19 @@ const useDealOwnership = (vaultAddress: string, nftID: number) => {
                 console.error('Error refreshing deal ownership', error);
             }
         }
-    }, [vaultAddress, signer, nftID]);
+    }, [vaultAddress, signer, nftID, web3authSfa.provider, web3authPnPInstance?.status, web3authPnPInstance?.provider]);
 
     const redeem = async () => {
-        if (window.ethereum && vaultAddress && signer) {
+        // Get Web3Auth provider
+        const web3AuthProvider = web3authSfa.provider
+            ? web3authSfa.provider
+            : web3authPnPInstance?.status === ADAPTER_STATUS.CONNECTED && web3authPnPInstance.provider
+                ? web3authPnPInstance.provider
+                : null;
+
+        if (web3AuthProvider && vaultAddress && signer) {
             try {
                 const decimals = process.env.NEXT_PUBLIC_INVESTMENT_TOKEN_DECIMALS || '6';
-                const provider = new ethers.BrowserProvider(window.ethereum);
                 const connectedAddress = await signer.getAddress();
                 const vault = new ethers.Contract(vaultAddress, DealVaultAbi, signer);
 
@@ -133,19 +145,13 @@ const useDealOwnership = (vaultAddress: string, nftID: number) => {
                     BigInt(investmentTokenDecimals)
                 );
 
-                console.log('💰 Investing:', amount, 'USDC');
-
                 // Approve vault to spend tokens
-                console.log('⏳ Step 1/2: Approving...');
                 const approveTx = await erc20.approve(vaultAddress, amountSerialized);
                 await approveTx.wait();
-                console.log('✅ Approved!');
 
                 // Deposit into vault
-                console.log('⏳ Step 2/2: Depositing...');
                 const tx = await vault.deposit(amountSerialized, signer.address);
                 await tx.wait();
-                console.log('✅ Deposit successful!');
 
                 // Refresh data after successful deposit
                 await refresh();
